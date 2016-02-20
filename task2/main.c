@@ -1,5 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    int id;
+    
+};
 
 int main(int argc, const char *argv[]) {
     FILE *fp = fopen(argv[1], "r+");
@@ -11,5 +17,12 @@ int main(int argc, const char *argv[]) {
         }
     }
 
+    for(;;) {
+        char cmd[1024];
+        if (!strcmp("exit", cmd)) {
+            break;
+        } else if (!strcmp("create", cmd)) {
 
+        }
+    }
 }
