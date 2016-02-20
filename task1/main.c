@@ -15,11 +15,12 @@ int main(int argc, const char *argv[]) {
 
     for (; ;) {
         int x1, x2, y1, y2;
-        scanf("%d %d %d %d", &x1, &y1, &x2, &y2);
-
+        scanf("%d", &x1);
         if (x1 == 0) {
             break;
         }
+
+        scanf("%d %d %d", &y1, &x2, &y2);
 
         for (int j = y1 - 1; j < y2; j++) {
             for (int i = x1 - 1; i < x2; i++) {
