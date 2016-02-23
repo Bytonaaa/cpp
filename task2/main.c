@@ -75,7 +75,7 @@ void readHeader(void) {
     }
 }
 
-//TODO: Possible bug
+//I think it's OK
 void flushCurTable(void) {
     fseek(file, 0x5000 * (long) curTableId, SEEK_SET);
     fwrite(tableBuf, 4096, 1, file);
@@ -144,7 +144,7 @@ uint32_t getNextBlock(uint32_t block) {
     return tableBuf[block];
 }
 
-//TODO: Possible bug
+//OK?
 uint32_t getBlockFromMainListById(uint64_t id) {
     uint64_t offset = 0x10 + 0x8 * (id - 1);
     uint64_t len = offset >> 4;
@@ -156,7 +156,7 @@ uint32_t getBlockFromMainListById(uint64_t id) {
     return block;
 }
 
-//TODO: Possible bug
+//Bug fixed!
 uint32_t allocBlock(void) {
     uint32_t table = 0;
     uint32_t block = 0;
@@ -170,7 +170,7 @@ uint32_t allocBlock(void) {
             numOfTables++;
         }
 
-        changeTable(0x5000 * table++);
+        changeTable(0x400 * table++);
 
         if (tableBuf[1]) {  //if any empty blocks are present in the table
             for (int i = 4; i < 1024; i++) {
@@ -189,7 +189,7 @@ uint32_t allocBlock(void) {
 
 
 //returns NULL if it reached to the end of chain
-//TODO: It looks harmless, but possibly buggy
+//TODO: Remove static
 void *readBlock(uint32_t block) {
     static uint32_t data[4];
 
@@ -206,7 +206,7 @@ void *readBlock(uint32_t block) {
     return data;
 }
 
-//TODO: Possible bug
+//OK?
 size_t writeBlock(uint32_t block, void *data) {
     if (block == EOC) {
         return 0;
@@ -226,7 +226,7 @@ void deleteBlock(uint32_t block) {
     tableBuf[0x1]++;    //contains number of free blocks in the table
 }
 
-//TODO: Look for bugs
+//I think there's no bugs
 char *readString(uint32_t block) {
     char *str, *ptr, *data;
 
@@ -244,7 +244,7 @@ char *readString(uint32_t block) {
         len--;
     }
 
-    while (len) { //0 - 1 == UINT32_MAX
+    while (len) {
         block = getNextBlock(block);
         data = (char *) readBlock(block);
 
@@ -309,7 +309,7 @@ void deleteString(uint32_t block) {
 //returns NULL if contacts are empty
 //returns NULL if the list are ended
 //returns entry->id == 0, if it is a deleted entry
-//TODO: Remove static Contact
+//TODO: Remove static
 Contact *getById(uint64_t id) {
     static Contact contact;
     uint32_t block, *data;
@@ -528,7 +528,7 @@ uint64_t ato64(const char *str) {
     return result;
 }
 
-//TODO: Check this
+//TODO: Bug fixed, but check this one more time
 FILE *createFile(const char *name) {
     FILE *fp = fopen(name, "w+b");
 
@@ -539,7 +539,7 @@ FILE *createFile(const char *name) {
 
     uint32_t *table = (uint32_t *) calloc(1048, sizeof(uint32_t));
     table[0] = 0x746e6f43;  //Signature "Cont"
-    table[1] = 1019;    //Empty blocks in the table
+    table[1] = 1018;    //Empty blocks in the table
     table[2] = 5;       //Next block to be written
     table[3] = 1;       //Number of tables
     table[4] = 5;       //No comments
@@ -606,7 +606,7 @@ void createEntry(char *name, char *number) {
     *(data + 1 + (id & 1 ? 0 : 2)) = numberBlock;
 
     writeBlock(block, data);
-    printf("ok\n");
+    //printf("ok\n");
 }
 
 //TODO: Add some errors, if a command did not enter correctly
