@@ -9,7 +9,7 @@
 
 #endif
 
-// This shit can create 39 GB and bigger files absolutely for no reason.
+// This shit can create 39 GB and bigger files absolutely for no reason. Or not.
 //
 //
 //
@@ -31,7 +31,7 @@
 //
 //
 //
-// TODO: Improve 39 GB or bigger file creation, because of "No space left on the device."
+//
 
 #define EOC ((uint32_t)0xFFFFFFF8)  //End of chain
 
