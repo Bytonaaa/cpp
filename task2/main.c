@@ -3,11 +3,11 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#ifdef __linux__
+#ifdef __linux__    //CLion's reformat removes this include on Mac
 #include <stdint.h>
 #endif
 
-// This program can create 39 GB files for no reason.
+// This shit can create 39 GB and bigger files absolutely for no reason.
 //
 //
 //
@@ -29,6 +29,7 @@
 //
 //
 //
+// TODO: Improve 39 GB or bigger file creation, because of "No space left on the device."
 
 #define EOC ((uint32_t)0xFFFFFFF8)  //End of chain
 #define NEXT_ID UINT64_MAX
@@ -56,7 +57,7 @@ typedef struct Entry {
     char *number;
 } Entry;
 
-
+//OK
 void readHeader(void) {
     fseek(file, 0x0, SEEK_SET);
     fread(tableBuf, sizeof(uint32_t), 1024, file);
@@ -73,11 +74,13 @@ void readHeader(void) {
     }
 }
 
+//TODO: Possible bug
 void flushCurTable(void) {
     fseek(file, 0x5000 * curTableId, SEEK_SET);
     fwrite(tableBuf, 4096, 1, file);
 }
 
+//OK
 void writeHeader(void) {
     flushCurTable();
 
@@ -88,6 +91,7 @@ void writeHeader(void) {
 }
 
 //loads another table into buffer if it is necessary
+//TODO: Possible bug
 void changeTable(uint32_t block) {
     if (curTableId != (block >> 10)) {
         flushCurTable();
@@ -102,12 +106,11 @@ void changeTable(uint32_t block) {
     }
 }
 
+//OK
 void writeTable(uint32_t block, uint32_t value) {
     changeTable(block);
 
     tableBuf[block & 0x3FF] = value;
-    
-    flushCurTable();    //let's kill ssd!!!
 
     //long posOfRecord = (long) 0x5000 * curTableId + (block & 0x3FF) * 4;
     ////fsetpos(file, &posOfRecord);
@@ -115,6 +118,7 @@ void writeTable(uint32_t block, uint32_t value) {
     //fwrite(&value, sizeof(uint32_t), 1, file);
 }
 
+//TODO: Possible bug
 void createTable(uint32_t table) {
     flushCurTable();
     memset(tableBuf, 0, 4096);
@@ -133,6 +137,7 @@ void createTable(uint32_t table) {
 }
 
 //returns the next block in the chain
+//OK
 uint32_t getNextBlock(uint32_t block) {
     if (block == EOC) {
         return EOC;
@@ -144,6 +149,7 @@ uint32_t getNextBlock(uint32_t block) {
     return tableBuf[block];
 }
 
+//TODO: Possible bug
 uint32_t getBlockFromMainListById(uint64_t id) {
     uint64_t offset = 0x10 + 0x8 * (id - 1);
     uint64_t len = offset >> 4;
@@ -155,7 +161,8 @@ uint32_t getBlockFromMainListById(uint64_t id) {
     return block;
 }
 
-uint32_t findEmptyBlock(void) {
+//TODO: Possible bug
+uint32_t allocBlock(void) {
     uint32_t table = 0;
     uint32_t block = 0;
 
@@ -187,6 +194,7 @@ uint32_t findEmptyBlock(void) {
 
 
 //returns NULL if it reached to the end of chain
+//TODO: It looks harmless, but possibly buggy
 void *readBlock(uint32_t block) {
     static uint32_t data[4];
 
@@ -203,6 +211,7 @@ void *readBlock(uint32_t block) {
     return data;
 }
 
+//TODO: Possible bug
 size_t writeBlock(uint32_t block, void *data) {
     if (block == EOC) {
         return 0;
@@ -216,6 +225,7 @@ size_t writeBlock(uint32_t block, void *data) {
     return fwrite(data, 16, 1, file);
 }
 
+//TODO: Possible bug
 void deleteBlock(uint32_t block) {
     writeTable(block, 0);
     tableBuf[0x1]++;    //contains number of free blocks in the table
@@ -225,7 +235,7 @@ void deleteBlock(uint32_t block) {
     fwrite(tableBuf + 0x1, sizeof(uint32_t), 1, file);
 }
 
-//
+//TODO: Look for bugs
 char *readString(uint32_t block) {
     char *str, *ptr, *data;
 
@@ -262,10 +272,11 @@ char *readString(uint32_t block) {
     return str;
 }
 
+//TODO: Check!!!11
 uint32_t writeString(char *str) {
     char data[16];
     uint32_t len = (uint32_t) strlen(str);
-    uint32_t firstBlock = findEmptyBlock();
+    uint32_t firstBlock = allocBlock();
     uint32_t lastBlock, block;
 
     *(uint32_t *) data = len;
@@ -279,7 +290,7 @@ uint32_t writeString(char *str) {
     lastBlock = firstBlock;
     while (len) {
         //writeTable(lastBlock, EOC);    //we must write smth to table before finding the next block
-        block = findEmptyBlock();
+        block = allocBlock();
         writeTable(lastBlock, block);
 
         for (int i = 0; i < 16 && len; i++) {
@@ -296,6 +307,7 @@ uint32_t writeString(char *str) {
 }
 
 //this destroys the chain of string
+//TODO: Check
 void deleteString(uint32_t block) {
     while (block != EOC) {
         uint32_t nextBlock = getNextBlock(block);
@@ -307,6 +319,7 @@ void deleteString(uint32_t block) {
 //returns NULL if contacts are empty
 //returns NULL if the list are ended
 //returns entry->id == 0, if it is a deleted entry
+//TODO: Remove "not thread-safe" elements.
 Entry *getById(uint64_t id) {
     static Entry entry;
     static uint64_t lastId;
@@ -364,6 +377,7 @@ Entry *getById(uint64_t id) {
     return &entry;
 }
 
+//TODO: I've tired of writing these todos.
 uint64_t findEmptyId(void) {
     if (sizeOfDirectory == entriesUsed) {
         if (sizeOfDirectory & 1) {
@@ -381,7 +395,7 @@ uint64_t findEmptyId(void) {
                 block = nextBlock;
             }
 
-            uint32_t newBlock = findEmptyBlock();
+            uint32_t newBlock = allocBlock();
             writeTable(block, newBlock);
 
             sizeOfDirectory++;
@@ -398,6 +412,7 @@ uint64_t findEmptyId(void) {
     }
 }
 
+//The most bugless method I've ever made.
 void stringToLower(char *str) {
     while (*str) {
         *str = (char) tolower(*str);
@@ -405,7 +420,8 @@ void stringToLower(char *str) {
     }
 }
 
-void extractCleanNumber(char *str) {
+//I think it works well.
+void getTrueNumber(char *str) {
     char *ptr = str;
 
     while (*ptr) {
@@ -417,6 +433,7 @@ void extractCleanNumber(char *str) {
     *str = '\0';
 }
 
+//TODO: Check clearly
 void findByNumber(const char *number) {
     Entry *entry = getById(1);
 
@@ -424,7 +441,7 @@ void findByNumber(const char *number) {
         if (entry->id) {
             char *str = (char *) malloc(strlen(entry->number) + 1);
             strcpy(str, entry->number);
-            extractCleanNumber(str);
+            getTrueNumber(str);
 
             if (!strcmp(str, number)) {
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
@@ -438,6 +455,7 @@ void findByNumber(const char *number) {
     }
 }
 
+//TODO: Check clearly
 void findByName(char *name) {
     stringToLower(name);
     Entry *entry = getById(1);
@@ -460,6 +478,7 @@ void findByName(char *name) {
     }
 }
 
+//TODO: Check
 void find(char *str) {
     if (!strcmp(str, "-a")) {
         Entry *entry = getById(1);
@@ -481,6 +500,7 @@ void find(char *str) {
     }
 }
 
+//TODO: Check
 void delete(uint64_t id) {
     uint32_t block = getBlockFromMainListById(id);
 
@@ -517,7 +537,7 @@ void delete(uint64_t id) {
 }
 
 //parses num string to uint64_t
-//
+//TODO: Incorrect string ruins the program. Maybe.
 uint64_t ato64(const char *str) {
     uint64_t result = 0;
     while (*str) {
@@ -527,6 +547,7 @@ uint64_t ato64(const char *str) {
     return result;
 }
 
+//TODO: Check this
 FILE *createFile(const char *name) {
     FILE *fp = fopen(name, "w+b");
 
@@ -549,6 +570,7 @@ FILE *createFile(const char *name) {
     return fp;
 }
 
+//TODO: Even this has bugs
 void changeName(uint64_t id, char *name) {
     uint32_t block = getBlockFromMainListById(id);
     uint32_t *data = readBlock(block);
@@ -569,6 +591,7 @@ void changeName(uint64_t id, char *name) {
     }
 }
 
+//TODO: Even this has bugs
 void changeNumber(uint64_t id, char *number) {
     uint32_t block = getBlockFromMainListById(id);
     uint32_t *data = readBlock(block);
@@ -589,6 +612,7 @@ void changeNumber(uint64_t id, char *number) {
     }
 }
 
+//TODO: Bugs, bugs and bugs
 void createEntry(char *name, char *number) {
     uint64_t id = findEmptyId();
     uint32_t nameBlock = writeString(name);
@@ -603,6 +627,7 @@ void createEntry(char *name, char *number) {
     writeBlock(block, data);
 }
 
+//TODO: Add some errors, if a command did not enter correctly
 int main(int argc, const char **argv) {
     if (argc < 2)
         return 1;
@@ -646,7 +671,6 @@ int main(int argc, const char **argv) {
         } else {
             puts("error: Command not found");
         }
-        
         fflush(stdout);
     }
 
