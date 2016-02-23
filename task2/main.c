@@ -406,7 +406,7 @@ void extractCleanNumber(char *str) {
     char *ptr = str;
 
     while (*ptr) {
-        if (isnumber(*(ptr++))) {
+        if (isdigit(*(ptr++))) {
             *(str++) = *(ptr - 1);
         }
     }
