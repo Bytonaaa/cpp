@@ -4,7 +4,9 @@
 #include <stdio.h>
 
 #ifdef __linux__    //CLion's reformat removes this include on Mac
+
 #include <stdint.h>
+
 #endif
 
 // This shit can create 39 GB and bigger files absolutely for no reason.
@@ -32,7 +34,6 @@
 // TODO: Improve 39 GB or bigger file creation, because of "No space left on the device."
 
 #define EOC ((uint32_t)0xFFFFFFF8)  //End of chain
-#define NEXT_ID UINT64_MAX
 
 #ifndef __x86_64__
 #error "Only x86-64 processors are supported"
@@ -308,36 +309,24 @@ void deleteString(uint32_t block) {
 //returns NULL if contacts are empty
 //returns NULL if the list are ended
 //returns entry->id == 0, if it is a deleted entry
-//TODO: Remove "not thread-safe" elements.
+//TODO: Remove static Contact
 Contact *getById(uint64_t id) {
-    static Contact entry;
-    static uint64_t lastId;
-    static uint32_t lastBlock;
+    static Contact contact;
     uint32_t block, *data;
 
-    if (entry.name) {
-        free(entry.name);
-        free(entry.number);
+    if (contact.name) {
+        free(contact.name);
+        free(contact.number);
 
-        entry.id = 0;
-        entry.name = NULL;
-        entry.number = NULL;
+        contact.id = 0;
+        contact.name = NULL;
+        contact.number = NULL;
     }
 
-    if (id == NEXT_ID) {
-        id = lastId + 1;
+    block = getBlockFromMainListById(id);
 
-        if (id > sizeOfDirectory) {
-            return NULL;
-        }
-
-        if (id & 1) {
-            block = getNextBlock(lastBlock);
-        } else {
-            block = lastBlock;
-        }
-    } else {
-        block = getBlockFromMainListById(id);
+    if (id > sizeOfDirectory) {
+        return NULL;
     }
 
     data = (uint32_t *) readBlock(block);
@@ -352,18 +341,16 @@ Contact *getById(uint64_t id) {
     uint32_t nameBlock = data[0 + (((id ^ 1) & 1) << 1)];
     uint32_t numberBlock = data[1 + (((id ^ 1) & 1) << 1)];
 
-    entry.name = readString(nameBlock);
-    entry.number = readString(numberBlock);
+    contact.name = readString(nameBlock);
+    contact.number = readString(numberBlock);
 
-    if (entry.name) {
-        entry.id = id;
+    if (contact.name) {
+        contact.id = id;
     } else {
-        entry.id = 0;
+        contact.id = 0;
     }
 
-    lastId = id;
-    lastBlock = block;
-    return &entry;
+    return &contact;
 }
 
 //TODO: I've tired of writing these todos.
@@ -401,54 +388,52 @@ uint64_t findEmptyId(void) {
     }
 }
 
-//TODO: Rewrite
+//OK
 char *getTrueNumber(char *str) {
-    char *returnStr = (char *) malloc(strlen(str) + 1);
-    char *ptr = returnStr;
-    strcpy(ptr, str);
-    str = ptr;
+    char *newStr = (char *) malloc(strlen(str) + 1);
 
-    while (*ptr) {
-        if (isdigit(*(ptr++))) {
-            *(str++) = *(ptr - 1);
+    int j = 0;
+    for (int i = 0; str[i]; i++) {
+        if (isdigit(str[i])) {
+            newStr[j++] = str[i];
         }
     }
 
-    *str = '\0';
-    return returnStr;
+    newStr[j] = '\0';
+    return newStr;
 }
 
-//TODO: Check clearly
+//TODO: OK. Maybe.
 void findByNumber(const char *number) {
-    Contact *entry = getById(1);
+    uint64_t id = 1;
 
-    while (entry) {
-        if (entry->id) {
-            char *str = getTrueNumber(entry->number);
+    Contact *contact = getById(id);
+    while (contact) {
+        if (contact->id) {
+            char *str = getTrueNumber(contact->number);
 
             if (!strcmp(str, number)) {
-                printf("%ld %s %s\n", entry->id, entry->name, entry->number);
-                fflush(stdout);
+                printf("%ld %s %s\n", contact->id, contact->name, contact->number);
             }
 
             free(str);
         }
 
-        entry = getById(NEXT_ID);
+        contact = getById(++id);
     }
 }
 
 //The most bugless method I've ever made.
 char *stringToLower(char *str) {
-    char *returnStr = (char *) malloc(strlen(str));
+    char *newStr = (char *) malloc(strlen(str) + 1);
 
     int i = 0;
     for (; str[i]; i++) {
-        returnStr[i] = (char) tolower(str[i]);
+        newStr[i] = (char) tolower(str[i]);
     }
 
-    returnStr[i] = '\0';
-    return returnStr;
+    newStr[i] = '\0';
+    return newStr;
 }
 
 //OK?
@@ -473,15 +458,17 @@ void findByName(char *name) {
     free(name);
 }
 
-//TODO: Check
+//OK
 void find(char *str) {
-    if (!strcmp(str, "-a")) {
-        Contact *entry = getById(1);
 
+    if (!strcmp(str, "-a")) {
+        uint64_t id = 1;
+
+        Contact *entry = getById(id);
         while (entry) {
             if (entry->id)
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
-            entry = getById(NEXT_ID);
+            entry = getById(++id);
         }
 
         return;
