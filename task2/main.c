@@ -105,6 +105,8 @@ void writeTable(uint32_t block, uint32_t value) {
     changeTable(block);
 
     tableBuf[block & 0x3FF] = value;
+    
+    flushCurTable();    //let's kill ssd!!!
 
     //long posOfRecord = (long) 0x5000 * curTableId + (block & 0x3FF) * 4;
     ////fsetpos(file, &posOfRecord);
@@ -643,7 +645,7 @@ int main(int argc, const char **argv) {
         } else {
             puts("error: Command not found");
         }
-        flushCurTable();    //let's kill ssd!!!
+        
         fflush(stdout);
     }
 
