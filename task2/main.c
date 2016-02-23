@@ -51,11 +51,11 @@ uint32_t entriesUsed;
 uint32_t tableBuf[1024], curTableId;
 
 
-typedef struct Entry {
+typedef struct Contact {
     uint64_t id;
     char *name;
     char *number;
-} Entry;
+} Contact;
 
 //OK
 void readHeader(void) {
@@ -309,8 +309,8 @@ void deleteString(uint32_t block) {
 //returns NULL if the list are ended
 //returns entry->id == 0, if it is a deleted entry
 //TODO: Remove "not thread-safe" elements.
-Entry *getById(uint64_t id) {
-    static Entry entry;
+Contact *getById(uint64_t id) {
+    static Contact entry;
     static uint64_t lastId;
     static uint32_t lastBlock;
     uint32_t block, *data;
@@ -420,7 +420,7 @@ char *getTrueNumber(char *str) {
 
 //TODO: Check clearly
 void findByNumber(const char *number) {
-    Entry *entry = getById(1);
+    Contact *entry = getById(1);
 
     while (entry) {
         if (entry->id) {
@@ -439,40 +439,44 @@ void findByNumber(const char *number) {
 }
 
 //The most bugless method I've ever made.
-void stringToLower(char *str) {
-    while (*str) {
-        *str = (char) tolower(*str);
-        str++;
+char *stringToLower(char *str) {
+    char *returnStr = (char *) malloc(strlen(str));
+
+    int i = 0;
+    for (; str[i]; i++) {
+        returnStr[i] = (char) tolower(str[i]);
     }
+
+    returnStr[i] = '\0';
+    return returnStr;
 }
 
-//TODO: Check clearly
+//OK?
 void findByName(char *name) {
-    stringToLower(name);
-    Entry *entry = getById(1);
+    name = stringToLower(name);
+    uint64_t id = 1;
 
-    while (entry) {
-        if (entry->id) {
-            char *str = (char *) malloc(strlen(entry->name) + 1);
-            strcpy(str, entry->name);
-            stringToLower(str);
+    Contact *contact = getById(id);
+    while (contact) {
+        if (contact->id) {
+            char *lower = stringToLower(contact->name);
 
-            if (strstr(str, name)) {
-                printf("%ld %s %s\n", entry->id, entry->name, entry->number);
-                //fflush(stdout);
+            if (strstr(lower, name)) {
+                printf("%ld %s %s\n", contact->id, contact->name, contact->number);
             }
 
-            free(str);
+            free(lower);
         }
 
-        entry = getById(NEXT_ID);
+        contact = getById(++id);
     }
+    free(name);
 }
 
 //TODO: Check
 void find(char *str) {
     if (!strcmp(str, "-a")) {
-        Entry *entry = getById(1);
+        Contact *entry = getById(1);
 
         while (entry) {
             if (entry->id)
