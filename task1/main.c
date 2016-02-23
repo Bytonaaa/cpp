@@ -16,6 +16,7 @@ int main(int argc, const char *argv[]) {
     for (; ;) {
         int x1, x2, y1, y2;
         scanf("%d", &x1);
+
         if (x1 == 0) {
             break;
         }
