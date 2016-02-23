@@ -434,6 +434,7 @@ char *getTrueNumber(char *str) {
     }
 
     *str = '\0';
+    return returnStr;
 }
 
 //TODO: Check clearly
