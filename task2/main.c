@@ -99,8 +99,7 @@ void changeTable(uint32_t block) {
         curTableId = (block >> 10);
 
         long tablePos = (long) 0x5000 * curTableId;
-
-        //fsetpos(file, &tablePos);
+        
         fseek(file, tablePos, SEEK_SET);
         fread(tableBuf, sizeof(uint32_t), 1024, file);
     }
@@ -225,14 +224,10 @@ size_t writeBlock(uint32_t block, void *data) {
     return fwrite(data, 16, 1, file);
 }
 
-//TODO: Possible bug
+//OK
 void deleteBlock(uint32_t block) {
     writeTable(block, 0);
     tableBuf[0x1]++;    //contains number of free blocks in the table
-
-    long pos = (long) 0x5000 * curTableId + 0x4;
-    fseek(file, pos, SEEK_SET);
-    fwrite(tableBuf + 0x1, sizeof(uint32_t), 1, file);
 }
 
 //TODO: Look for bugs
@@ -521,7 +516,6 @@ void delete(uint64_t id) {
         /*int ic = (((int) id ^ 1) & 1);
         uint32_t nameBlock = data[ic * 2 + 0];
         uint32_t numberBlock = data[ic * 2 + 1];
-
         new_data[ic * 2 + 0] = 0;
         new_data[ic * 2 + 1] = 0;
         new_data[!ic * 2 + 0] = data[!ic * 2 + 0];
@@ -627,9 +621,11 @@ void createEntry(char *name, char *number) {
     *(data + 1 + (id & 1 ? 0 : 2)) = numberBlock;
 
     writeBlock(block, data);
+    printf("ok\n");
 }
 
 //TODO: Add some errors, if a command did not enter correctly
+//TODO: Reach scanf limit of 4K characters;
 int main(int argc, const char **argv) {
     if (argc < 2)
         return 1;
@@ -677,6 +673,7 @@ int main(int argc, const char **argv) {
     }
 
     free(buffer);
+    free(bufferB);
     writeHeader();
     fclose(file);
 }
