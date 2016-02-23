@@ -421,8 +421,11 @@ void stringToLower(char *str) {
 }
 
 //I think it works well.
-void getTrueNumber(char *str) {
-    char *ptr = str;
+char *getTrueNumber(char *str) {
+    char *returnStr = (char *) malloc(strlen(str) + 1);
+    char *ptr = returnStr;
+    strcpy(ptr, str);
+    str = ptr;
 
     while (*ptr) {
         if (isdigit(*(ptr++))) {
@@ -431,6 +434,7 @@ void getTrueNumber(char *str) {
     }
 
     *str = '\0';
+    return returnStr;
 }
 
 //TODO: Check clearly
@@ -439,9 +443,7 @@ void findByNumber(const char *number) {
 
     while (entry) {
         if (entry->id) {
-            char *str = (char *) malloc(strlen(entry->number) + 1);
-            strcpy(str, entry->number);
-            getTrueNumber(str);
+            char *str = getTrueNumber(entry->number);
 
             if (!strcmp(str, number)) {
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
@@ -468,7 +470,7 @@ void findByName(char *name) {
 
             if (strstr(str, name)) {
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
-                fflush(stdout);
+                //fflush(stdout);
             }
 
             free(str);
