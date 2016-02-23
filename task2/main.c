@@ -4,10 +4,12 @@
 #include <stdio.h>
 
 #ifdef __linux__    //CLion's reformat removes this include on Mac
+
 #include <stdint.h>
+
 #endif
 
-// This shit can create 39 GB and bigger files absolutely for no reason.
+// This shit can create 39 GB and bigger files absolutely for no reason. Or not.
 //
 //
 //
@@ -29,10 +31,9 @@
 //
 //
 //
-// TODO: Improve 39 GB or bigger file creation, because of "No space left on the device."
+//
 
 #define EOC ((uint32_t)0xFFFFFFF8)  //End of chain
-#define NEXT_ID UINT64_MAX
 
 #ifndef __x86_64__
 #error "Only x86-64 processors are supported"
@@ -51,11 +52,11 @@ uint32_t entriesUsed;
 uint32_t tableBuf[1024], curTableId;
 
 
-typedef struct Entry {
+typedef struct Contact {
     uint64_t id;
     char *name;
     char *number;
-} Entry;
+} Contact;
 
 //OK
 void readHeader(void) {
@@ -74,9 +75,9 @@ void readHeader(void) {
     }
 }
 
-//TODO: Possible bug
+//I think it's OK
 void flushCurTable(void) {
-    fseek(file, 0x5000 * curTableId, SEEK_SET);
+    fseek(file, 0x5000 * (long) curTableId, SEEK_SET);
     fwrite(tableBuf, 4096, 1, file);
 }
 
@@ -100,7 +101,6 @@ void changeTable(uint32_t block) {
 
         long tablePos = (long) 0x5000 * curTableId;
 
-        //fsetpos(file, &tablePos);
         fseek(file, tablePos, SEEK_SET);
         fread(tableBuf, sizeof(uint32_t), 1024, file);
     }
@@ -111,11 +111,6 @@ void writeTable(uint32_t block, uint32_t value) {
     changeTable(block);
 
     tableBuf[block & 0x3FF] = value;
-
-    //long posOfRecord = (long) 0x5000 * curTableId + (block & 0x3FF) * 4;
-    ////fsetpos(file, &posOfRecord);
-    //fseek(file, posOfRecord, SEEK_SET);
-    //fwrite(&value, sizeof(uint32_t), 1, file);
 }
 
 //TODO: Possible bug
@@ -149,7 +144,7 @@ uint32_t getNextBlock(uint32_t block) {
     return tableBuf[block];
 }
 
-//TODO: Possible bug
+//OK?
 uint32_t getBlockFromMainListById(uint64_t id) {
     uint64_t offset = 0x10 + 0x8 * (id - 1);
     uint64_t len = offset >> 4;
@@ -161,7 +156,7 @@ uint32_t getBlockFromMainListById(uint64_t id) {
     return block;
 }
 
-//TODO: Possible bug
+//Bug fixed!
 uint32_t allocBlock(void) {
     uint32_t table = 0;
     uint32_t block = 0;
@@ -175,7 +170,7 @@ uint32_t allocBlock(void) {
             numOfTables++;
         }
 
-        changeTable(0x5000 * table++);
+        changeTable(0x400 * table++);
 
         if (tableBuf[1]) {  //if any empty blocks are present in the table
             for (int i = 4; i < 1024; i++) {
@@ -194,7 +189,7 @@ uint32_t allocBlock(void) {
 
 
 //returns NULL if it reached to the end of chain
-//TODO: It looks harmless, but possibly buggy
+//TODO: Remove static
 void *readBlock(uint32_t block) {
     static uint32_t data[4];
 
@@ -211,7 +206,7 @@ void *readBlock(uint32_t block) {
     return data;
 }
 
-//TODO: Possible bug
+//OK?
 size_t writeBlock(uint32_t block, void *data) {
     if (block == EOC) {
         return 0;
@@ -225,17 +220,13 @@ size_t writeBlock(uint32_t block, void *data) {
     return fwrite(data, 16, 1, file);
 }
 
-//TODO: Possible bug
+//OK
 void deleteBlock(uint32_t block) {
     writeTable(block, 0);
     tableBuf[0x1]++;    //contains number of free blocks in the table
-
-    long pos = (long) 0x5000 * curTableId + 0x4;
-    fseek(file, pos, SEEK_SET);
-    fwrite(tableBuf + 0x1, sizeof(uint32_t), 1, file);
 }
 
-//TODO: Look for bugs
+//I think there's no bugs
 char *readString(uint32_t block) {
     char *str, *ptr, *data;
 
@@ -253,7 +244,7 @@ char *readString(uint32_t block) {
         len--;
     }
 
-    while (len) { //0 - 1 == UINT32_MAX
+    while (len) {
         block = getNextBlock(block);
         data = (char *) readBlock(block);
 
@@ -272,7 +263,7 @@ char *readString(uint32_t block) {
     return str;
 }
 
-//TODO: Check!!!11
+//OK?
 uint32_t writeString(char *str) {
     char data[16];
     uint32_t len = (uint32_t) strlen(str);
@@ -289,7 +280,6 @@ uint32_t writeString(char *str) {
 
     lastBlock = firstBlock;
     while (len) {
-        //writeTable(lastBlock, EOC);    //we must write smth to table before finding the next block
         block = allocBlock();
         writeTable(lastBlock, block);
 
@@ -302,12 +292,12 @@ uint32_t writeString(char *str) {
         lastBlock = block;
     }
 
-    writeTable(lastBlock, EOC);
+    writeTable(lastBlock, EOC); //na vsyakii sluchai
     return firstBlock;
 }
 
 //this destroys the chain of string
-//TODO: Check
+//OK?
 void deleteString(uint32_t block) {
     while (block != EOC) {
         uint32_t nextBlock = getNextBlock(block);
@@ -319,36 +309,24 @@ void deleteString(uint32_t block) {
 //returns NULL if contacts are empty
 //returns NULL if the list are ended
 //returns entry->id == 0, if it is a deleted entry
-//TODO: Remove "not thread-safe" elements.
-Entry *getById(uint64_t id) {
-    static Entry entry;
-    static uint64_t lastId;
-    static uint32_t lastBlock;
+//TODO: Remove static
+Contact *getById(uint64_t id) {
+    static Contact contact;
     uint32_t block, *data;
 
-    if (entry.name) {
-        free(entry.name);
-        free(entry.number);
+    if (contact.name) {
+        free(contact.name);
+        free(contact.number);
 
-        entry.id = 0;
-        entry.name = NULL;
-        entry.number = NULL;
+        contact.id = 0;
+        contact.name = NULL;
+        contact.number = NULL;
     }
 
-    if (id == NEXT_ID) {
-        id = lastId + 1;
+    block = getBlockFromMainListById(id);
 
-        if (id > sizeOfDirectory) {
-            return NULL;
-        }
-
-        if (id & 1) {
-            block = getNextBlock(lastBlock);
-        } else {
-            block = lastBlock;
-        }
-    } else {
-        block = getBlockFromMainListById(id);
+    if (id > sizeOfDirectory) {
+        return NULL;
     }
 
     data = (uint32_t *) readBlock(block);
@@ -363,18 +341,16 @@ Entry *getById(uint64_t id) {
     uint32_t nameBlock = data[0 + (((id ^ 1) & 1) << 1)];
     uint32_t numberBlock = data[1 + (((id ^ 1) & 1) << 1)];
 
-    entry.name = readString(nameBlock);
-    entry.number = readString(numberBlock);
+    contact.name = readString(nameBlock);
+    contact.number = readString(numberBlock);
 
-    if (entry.name) {
-        entry.id = id;
+    if (contact.name) {
+        contact.id = id;
     } else {
-        entry.id = 0;
+        contact.id = 0;
     }
 
-    lastId = id;
-    lastBlock = block;
-    return &entry;
+    return &contact;
 }
 
 //TODO: I've tired of writing these todos.
@@ -412,83 +388,87 @@ uint64_t findEmptyId(void) {
     }
 }
 
-//The most bugless method I've ever made.
-void stringToLower(char *str) {
-    while (*str) {
-        *str = (char) tolower(*str);
-        str++;
-    }
-}
-
-//I think it works well.
+//OK
 char *getTrueNumber(char *str) {
-    char *returnStr = (char *) malloc(strlen(str) + 1);
-    char *ptr = returnStr;
-    strcpy(ptr, str);
-    str = ptr;
+    char *newStr = (char *) malloc(strlen(str) + 1);
 
-    while (*ptr) {
-        if (isdigit(*(ptr++))) {
-            *(str++) = *(ptr - 1);
+    int j = 0;
+    for (int i = 0; str[i]; i++) {
+        if (isdigit(str[i])) {
+            newStr[j++] = str[i];
         }
     }
 
-    *str = '\0';
-    return returnStr;
+    newStr[j] = '\0';
+    return newStr;
 }
 
-//TODO: Check clearly
+//TODO: OK. Maybe.
 void findByNumber(const char *number) {
-    Entry *entry = getById(1);
+    uint64_t id = 1;
 
-    while (entry) {
-        if (entry->id) {
-            char *str = getTrueNumber(entry->number);
+    Contact *contact = getById(id);
+    while (contact) {
+        if (contact->id) {
+            char *str = getTrueNumber(contact->number);
 
             if (!strcmp(str, number)) {
-                printf("%ld %s %s\n", entry->id, entry->name, entry->number);
-                fflush(stdout);
+                printf("%ld %s %s\n", contact->id, contact->name, contact->number);
             }
 
             free(str);
         }
 
-        entry = getById(NEXT_ID);
+        contact = getById(++id);
     }
 }
 
-//TODO: Check clearly
+//The most bugless method I've ever made.
+char *stringToLower(char *str) {
+    char *newStr = (char *) malloc(strlen(str) + 1);
+
+    int i = 0;
+    for (; str[i]; i++) {
+        newStr[i] = (char) tolower(str[i]);
+    }
+
+    newStr[i] = '\0';
+    return newStr;
+}
+
+//OK?
 void findByName(char *name) {
-    stringToLower(name);
-    Entry *entry = getById(1);
+    name = stringToLower(name);
+    uint64_t id = 1;
 
-    while (entry) {
-        if (entry->id) {
-            char *str = (char *) malloc(strlen(entry->name) + 1);
-            strcpy(str, entry->name);
-            stringToLower(str);
+    Contact *contact = getById(id);
+    while (contact) {
+        if (contact->id) {
+            char *lower = stringToLower(contact->name);
 
-            if (strstr(str, name)) {
-                printf("%ld %s %s\n", entry->id, entry->name, entry->number);
-                //fflush(stdout);
+            if (strstr(lower, name)) {
+                printf("%ld %s %s\n", contact->id, contact->name, contact->number);
             }
 
-            free(str);
+            free(lower);
         }
 
-        entry = getById(NEXT_ID);
+        contact = getById(++id);
     }
+    free(name);
 }
 
-//TODO: Check
+//OK
 void find(char *str) {
-    if (!strcmp(str, "-a")) {
-        Entry *entry = getById(1);
 
+    if (!strcmp(str, "-a")) {
+        uint64_t id = 1;
+
+        Contact *entry = getById(id);
         while (entry) {
             if (entry->id)
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
-            entry = getById(NEXT_ID);
+            entry = getById(++id);
         }
 
         return;
@@ -521,7 +501,6 @@ void delete(uint64_t id) {
         /*int ic = (((int) id ^ 1) & 1);
         uint32_t nameBlock = data[ic * 2 + 0];
         uint32_t numberBlock = data[ic * 2 + 1];
-
         new_data[ic * 2 + 0] = 0;
         new_data[ic * 2 + 1] = 0;
         new_data[!ic * 2 + 0] = data[!ic * 2 + 0];
@@ -549,7 +528,7 @@ uint64_t ato64(const char *str) {
     return result;
 }
 
-//TODO: Check this
+//TODO: Bug fixed, but check this one more time
 FILE *createFile(const char *name) {
     FILE *fp = fopen(name, "w+b");
 
@@ -560,7 +539,7 @@ FILE *createFile(const char *name) {
 
     uint32_t *table = (uint32_t *) calloc(1048, sizeof(uint32_t));
     table[0] = 0x746e6f43;  //Signature "Cont"
-    table[1] = 1019;    //Empty blocks in the table
+    table[1] = 1018;    //Empty blocks in the table
     table[2] = 5;       //Next block to be written
     table[3] = 1;       //Number of tables
     table[4] = 5;       //No comments
@@ -627,9 +606,11 @@ void createEntry(char *name, char *number) {
     *(data + 1 + (id & 1 ? 0 : 2)) = numberBlock;
 
     writeBlock(block, data);
+    //printf("ok\n");
 }
 
 //TODO: Add some errors, if a command did not enter correctly
+//TODO: Reach scanf limit of 4K characters;
 int main(int argc, const char **argv) {
     if (argc < 2)
         return 1;
@@ -677,6 +658,7 @@ int main(int argc, const char **argv) {
     }
 
     free(buffer);
+    free(bufferB);
     writeHeader();
     fclose(file);
 }
