@@ -99,7 +99,7 @@ void changeTable(uint32_t block) {
         curTableId = (block >> 10);
 
         long tablePos = (long) 0x5000 * curTableId;
-        
+
         fseek(file, tablePos, SEEK_SET);
         fread(tableBuf, sizeof(uint32_t), 1024, file);
     }
@@ -110,11 +110,6 @@ void writeTable(uint32_t block, uint32_t value) {
     changeTable(block);
 
     tableBuf[block & 0x3FF] = value;
-
-    //long posOfRecord = (long) 0x5000 * curTableId + (block & 0x3FF) * 4;
-    ////fsetpos(file, &posOfRecord);
-    //fseek(file, posOfRecord, SEEK_SET);
-    //fwrite(&value, sizeof(uint32_t), 1, file);
 }
 
 //TODO: Possible bug
@@ -267,7 +262,7 @@ char *readString(uint32_t block) {
     return str;
 }
 
-//TODO: Check!!!11
+//OK?
 uint32_t writeString(char *str) {
     char data[16];
     uint32_t len = (uint32_t) strlen(str);
@@ -284,7 +279,6 @@ uint32_t writeString(char *str) {
 
     lastBlock = firstBlock;
     while (len) {
-        //writeTable(lastBlock, EOC);    //we must write smth to table before finding the next block
         block = allocBlock();
         writeTable(lastBlock, block);
 
@@ -297,12 +291,12 @@ uint32_t writeString(char *str) {
         lastBlock = block;
     }
 
-    writeTable(lastBlock, EOC);
+    writeTable(lastBlock, EOC); //na vsyakii sluchai
     return firstBlock;
 }
 
 //this destroys the chain of string
-//TODO: Check
+//OK?
 void deleteString(uint32_t block) {
     while (block != EOC) {
         uint32_t nextBlock = getNextBlock(block);
@@ -407,15 +401,7 @@ uint64_t findEmptyId(void) {
     }
 }
 
-//The most bugless method I've ever made.
-void stringToLower(char *str) {
-    while (*str) {
-        *str = (char) tolower(*str);
-        str++;
-    }
-}
-
-//I think it works well.
+//TODO: Rewrite
 char *getTrueNumber(char *str) {
     char *returnStr = (char *) malloc(strlen(str) + 1);
     char *ptr = returnStr;
@@ -449,6 +435,14 @@ void findByNumber(const char *number) {
         }
 
         entry = getById(NEXT_ID);
+    }
+}
+
+//The most bugless method I've ever made.
+void stringToLower(char *str) {
+    while (*str) {
+        *str = (char) tolower(*str);
+        str++;
     }
 }
 
