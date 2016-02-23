@@ -7,6 +7,7 @@
 #include <stdint.h>
 #endif
 
+// This program can create 39 GB files for no reason.
 //
 //
 //
