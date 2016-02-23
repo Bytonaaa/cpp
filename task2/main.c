@@ -643,6 +643,7 @@ int main(int argc, const char **argv) {
         } else {
             puts("error: Command not found");
         }
+        flushCurTable();    //let's kill ssd!!!
         fflush(stdout);
     }
 
