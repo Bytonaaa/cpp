@@ -15,10 +15,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2578c832-3df6-44fe-9b3b-873930d94339" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/test.c" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/task2.iml" afterPath="$PROJECT_DIR$/.idea/task2.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CMakeLists.txt" afterPath="$PROJECT_DIR$/CMakeLists.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.c" afterPath="$PROJECT_DIR$/main.c" />
     </list>
     <ignored path="task2.iws" />
@@ -43,14 +39,14 @@
       <file leaf-file-name="main.c" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-12.673077">
-              <caret line="184" column="0" selection-start-line="184" selection-start-column="0" selection-end-line="184" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.8194726">
+              <caret line="463" column="19" selection-start-line="463" selection-start-column="19" selection-end-line="463" selection-end-column="19" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
-                <element signature="e#96#115#0" expanded="true" />
-                <element signature="e#346#391#0" expanded="true" />
-                <element signature="e#413#439#0" expanded="true" />
-                <element signature="e#495#570#0" expanded="true" />
+                <element signature="e#146#165#0" expanded="true" />
+                <element signature="e#559#604#0" expanded="true" />
+                <element signature="e#626#652#0" expanded="true" />
+                <element signature="e#708#783#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -286,11 +282,11 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.c</url>
-          <line>340</line>
+          <line>354</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="10" />
+      <option name="time" value="11" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -301,10 +297,10 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#96#115#0" expanded="true" />
-            <element signature="e#346#391#0" expanded="true" />
-            <element signature="e#413#439#0" expanded="true" />
-            <element signature="e#495#570#0" expanded="true" />
+            <element signature="e#146#165#0" expanded="true" />
+            <element signature="e#559#604#0" expanded="true" />
+            <element signature="e#626#652#0" expanded="true" />
+            <element signature="e#708#783#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -323,10 +319,10 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#96#115#0" expanded="true" />
-            <element signature="e#346#391#0" expanded="true" />
-            <element signature="e#413#439#0" expanded="true" />
-            <element signature="e#495#570#0" expanded="true" />
+            <element signature="e#146#165#0" expanded="true" />
+            <element signature="e#559#604#0" expanded="true" />
+            <element signature="e#626#652#0" expanded="true" />
+            <element signature="e#708#783#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -345,10 +341,10 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#96#115#0" expanded="true" />
-            <element signature="e#346#391#0" expanded="true" />
-            <element signature="e#413#439#0" expanded="true" />
-            <element signature="e#495#570#0" expanded="true" />
+            <element signature="e#146#165#0" expanded="true" />
+            <element signature="e#559#604#0" expanded="true" />
+            <element signature="e#626#652#0" expanded="true" />
+            <element signature="e#708#783#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -392,14 +388,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/main.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-12.673077">
-          <caret line="184" column="0" selection-start-line="184" selection-start-column="0" selection-end-line="184" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.8194726">
+          <caret line="463" column="19" selection-start-line="463" selection-start-column="19" selection-end-line="463" selection-end-column="19" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#96#115#0" expanded="true" />
-            <element signature="e#346#391#0" expanded="true" />
-            <element signature="e#413#439#0" expanded="true" />
-            <element signature="e#495#570#0" expanded="true" />
+            <element signature="e#146#165#0" expanded="true" />
+            <element signature="e#559#604#0" expanded="true" />
+            <element signature="e#626#652#0" expanded="true" />
+            <element signature="e#708#783#0" expanded="true" />
           </folding>
         </state>
       </provider>
