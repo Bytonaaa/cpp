@@ -2,7 +2,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+
+#ifdef __linux__
 #include <stdint.h>
+#endif
 
 //
 //
@@ -399,14 +402,32 @@ void stringToLower(char *str) {
     }
 }
 
+void extractCleanNumber(char *str) {
+    char *ptr = str;
+
+    while (*ptr) {
+        if (isnumber(*(ptr++))) {
+            *(str++) = *(ptr - 1);
+        }
+    }
+
+    *str = '\0';
+}
+
 void findByNumber(const char *number) {
     Entry *entry = getById(1);
 
     while (entry) {
         if (entry->id) {
-            if (!strcmp(entry->number, number)) {
+            char *str = (char *) malloc(strlen(entry->number) + 1);
+            strcpy(str, entry->number);
+            extractCleanNumber(str);
+
+            if (!strcmp(str, number)) {
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
             }
+
+            free(str);
         }
 
         entry = getById(NEXT_ID);
@@ -426,6 +447,8 @@ void findByName(char *name) {
             if (strstr(str, name)) {
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
             }
+
+            free(str);
         }
 
         entry = getById(NEXT_ID);
