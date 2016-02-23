@@ -425,6 +425,7 @@ void findByNumber(const char *number) {
 
             if (!strcmp(str, number)) {
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
+                fflush(stdout);
             }
 
             free(str);
@@ -446,6 +447,7 @@ void findByName(char *name) {
 
             if (strstr(str, name)) {
                 printf("%ld %s %s\n", entry->id, entry->name, entry->number);
+                fflush(stdout);
             }
 
             free(str);
