@@ -76,7 +76,7 @@ void readHeader(void) {
 
 //TODO: Possible bug
 void flushCurTable(void) {
-    fseek(file, 0x5000 * curTableId, SEEK_SET);
+    fseek(file, 0x5000 * (long) curTableId, SEEK_SET);
     fwrite(tableBuf, 4096, 1, file);
 }
 
