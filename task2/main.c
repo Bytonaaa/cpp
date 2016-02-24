@@ -3,35 +3,13 @@
 #include <ctype.h>
 #include <stdio.h>
 
+//Sorry for my bad english
+
 #ifdef __linux__    //CLion's reformat removes this include on Mac
 
 #include <stdint.h>
 
 #endif
-
-// This shit can create 39 GB and bigger files absolutely for no reason. Or not.
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//              DO NOT READ THIS SHITCODE, PLEASE !!!!!!!!11!!
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 #define EOC ((uint32_t)0xFFFFFFF8)  //End of chain
 
@@ -39,10 +17,10 @@
 #error "Only x86-64 processors are supported"
 #endif
 #ifdef _WIN32
-#error "Windows must die!"
+#error "This won't work on Windows"
 #endif
 #if !(defined(__APPLE__) || defined(__linux__))
-#warning "This shit was only tested on Linux and OS X. Use it at own risk!"
+#warning "This was only tested on Linux and OS X. Use it at own risk!"
 #endif
 
 FILE *file;
@@ -75,13 +53,13 @@ void readHeader(void) {
     }
 }
 
-//I think it's OK
+//Save table to file
 void flushCurTable(void) {
     fseek(file, 0x5000 * (long) curTableId, SEEK_SET);
     fwrite(tableBuf, 4096, 1, file);
 }
 
-//OK
+//Before fclose, use this procedure
 void writeHeader(void) {
     flushCurTable();
 
@@ -92,7 +70,6 @@ void writeHeader(void) {
 }
 
 //loads another table into buffer if it is necessary
-//TODO: Possible bug
 void changeTable(uint32_t block) {
     if (curTableId != (block >> 10)) {
         flushCurTable();
@@ -106,7 +83,7 @@ void changeTable(uint32_t block) {
     }
 }
 
-//OK
+//writes to table by number of block
 void writeTable(uint32_t block, uint32_t value) {
     changeTable(block);
 
@@ -132,7 +109,6 @@ void createTable(uint32_t table) {
 }
 
 //returns the next block in the chain
-//OK
 uint32_t getNextBlock(uint32_t block) {
     if (block == EOC) {
         return EOC;
@@ -206,7 +182,7 @@ void *readBlock(uint32_t block) {
     return data;
 }
 
-//OK?
+//writes block of data to file
 size_t writeBlock(uint32_t block, void *data) {
     if (block == EOC) {
         return 0;
@@ -220,13 +196,13 @@ size_t writeBlock(uint32_t block, void *data) {
     return fwrite(data, 16, 1, file);
 }
 
-//OK
+//writes NULL to table by number of block
 void deleteBlock(uint32_t block) {
     writeTable(block, 0);
     tableBuf[0x1]++;    //contains number of free blocks in the table
 }
 
-//I think there's no bugs
+//reads string from file by blockid
 char *readString(uint32_t block) {
     char *str, *ptr, *data;
 
@@ -263,7 +239,7 @@ char *readString(uint32_t block) {
     return str;
 }
 
-//OK?
+//creates new string in file and returns blockid
 uint32_t writeString(char *str) {
     char data[16];
     uint32_t len = (uint32_t) strlen(str);
@@ -296,8 +272,7 @@ uint32_t writeString(char *str) {
     return firstBlock;
 }
 
-//this destroys the chain of string
-//OK?
+//destroys the chain of string
 void deleteString(uint32_t block) {
     while (block != EOC) {
         uint32_t nextBlock = getNextBlock(block);
@@ -308,7 +283,7 @@ void deleteString(uint32_t block) {
 
 //returns NULL if contacts are empty
 //returns NULL if the list are ended
-//returns entry->id == 0, if it is a deleted entry
+//returns entry->id == 0, if it is a free entry
 //TODO: Remove static
 Contact *getById(uint64_t id) {
     static Contact contact;
@@ -353,7 +328,7 @@ Contact *getById(uint64_t id) {
     return &contact;
 }
 
-//TODO: I've tired of writing these todos.
+//finds id for a new contact
 uint64_t findEmptyId(void) {
     if (sizeOfDirectory == entriesUsed) {
         if (sizeOfDirectory & 1) {
@@ -388,7 +363,7 @@ uint64_t findEmptyId(void) {
     }
 }
 
-//OK
+//removes special symbols from number string
 char *getTrueNumber(char *str) {
     char *newStr = (char *) malloc(strlen(str) + 1);
 
@@ -403,7 +378,7 @@ char *getTrueNumber(char *str) {
     return newStr;
 }
 
-//TODO: OK. Maybe.
+//
 void findByNumber(const char *number) {
     uint64_t id = 1;
 
@@ -423,7 +398,7 @@ void findByNumber(const char *number) {
     }
 }
 
-//The most bugless method I've ever made.
+//
 char *stringToLower(char *str) {
     char *newStr = (char *) malloc(strlen(str) + 1);
 
@@ -436,7 +411,7 @@ char *stringToLower(char *str) {
     return newStr;
 }
 
-//OK?
+//
 void findByName(char *name) {
     name = stringToLower(name);
     uint64_t id = 1;
@@ -458,7 +433,7 @@ void findByName(char *name) {
     free(name);
 }
 
-//OK
+//
 void find(char *str) {
 
     if (!strcmp(str, "-a")) {
@@ -482,7 +457,7 @@ void find(char *str) {
     }
 }
 
-//TODO: Check
+//removes contact by id
 void delete(uint64_t id) {
     uint32_t block = getBlockFromMainListById(id);
 
@@ -518,7 +493,7 @@ void delete(uint64_t id) {
 }
 
 //parses num string to uint64_t
-//TODO: Incorrect string ruins the program. Maybe.
+//c99 do not support atoll()
 uint64_t ato64(const char *str) {
     uint64_t result = 0;
     while (*str) {
@@ -528,7 +503,7 @@ uint64_t ato64(const char *str) {
     return result;
 }
 
-//TODO: Bug fixed, but check this one more time
+//if file does not exist, creates a new file
 FILE *createFile(const char *name) {
     FILE *fp = fopen(name, "w+b");
 
@@ -551,7 +526,7 @@ FILE *createFile(const char *name) {
     return fp;
 }
 
-//TODO: Even this has bugs
+//changes name by id
 void changeName(uint64_t id, char *name) {
     uint32_t block = getBlockFromMainListById(id);
     uint32_t *data = readBlock(block);
@@ -572,7 +547,7 @@ void changeName(uint64_t id, char *name) {
     }
 }
 
-//TODO: Even this has bugs
+//changes number by id
 void changeNumber(uint64_t id, char *number) {
     uint32_t block = getBlockFromMainListById(id);
     uint32_t *data = readBlock(block);
@@ -593,7 +568,7 @@ void changeNumber(uint64_t id, char *number) {
     }
 }
 
-//TODO: Bugs, bugs and bugs
+//creates a new contact
 void createEntry(char *name, char *number) {
     uint64_t id = findEmptyId();
     uint32_t nameBlock = writeString(name);
@@ -609,7 +584,6 @@ void createEntry(char *name, char *number) {
     //printf("ok\n");
 }
 
-//TODO: Add some errors, if a command did not enter correctly
 //TODO: Reach scanf limit of 4K characters;
 int main(int argc, const char **argv) {
     if (argc < 2)
