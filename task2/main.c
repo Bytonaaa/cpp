@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <setjmp.h>
 
 //Sorry for my bad english
 
@@ -39,8 +40,9 @@
 
 #define ROOT_OFFSET (TABLE_SIZE + 4 * BLOCK_SIZE)
 
-#define ERR_INCORRECT_INPUT "error: incorrect input"
-#define ERR_NO_COMMAND "error: command not found"
+#define ERR_NO_COMMAND 1
+#define ERR_INCORRECT_INPUT 2
+#define EXIT 3
 ///////////////////////////////////////////////////
 
 #ifndef __x86_64__
@@ -652,6 +654,7 @@ int main(int argc, const char **argv) {
 
     for (; ;) {
         char *string = getLine();
+        int errorCode = 0;
 
         char *cmd = strtok(string, DELIM);
         if (cmd == NULL) {
@@ -663,14 +666,18 @@ int main(int argc, const char **argv) {
             char *name = strtok(NULL, DELIM);
             char *number = strtok(NULL, DELIM);
 
-            createContact(name, number);
+            if (name && number) {
+                createContact(name, number);
+            } else {
+                errorCode = ERR_INCORRECT_INPUT;
+            }
         } else if (!strcmp(cmd, "find")) {
             char *str = strtok(NULL, DELIM);
 
             if (str) {
                 find(str);
             } else {
-                puts("usage: find <name/number>");
+                errorCode = ERR_INCORRECT_INPUT;
             }
         } else if (!strcmp(cmd, "change")) {
             char *idStr = strtok(NULL, DELIM);
@@ -680,15 +687,19 @@ int main(int argc, const char **argv) {
                 char *subcmd = strtok(NULL, DELIM);
                 char *str = strtok(NULL, DELIM);
 
-                if (!strcmp(subcmd, "name")) {
-                    changeName(id, str);
-                } else if (!strcmp(subcmd, "number")) {
-                    changeNumber(id, str);
+                if (subcmd && str) {
+                    if (!strcmp(subcmd, "name")) {
+                        changeName(id, str);
+                    } else if (!strcmp(subcmd, "number")) {
+                        changeNumber(id, str);
+                    } else {
+                        errorCode = ERR_INCORRECT_INPUT;
+                    }
                 } else {
-                    puts(ERR_INCORRECT_INPUT);
+                    errorCode = ERR_INCORRECT_INPUT;
                 }
             } else {
-                puts(ERR_INCORRECT_INPUT);
+                errorCode = ERR_INCORRECT_INPUT;
             }
         } else if (!strcmp(cmd, "delete")) {
             char *idStr = strtok(NULL, DELIM);
@@ -698,17 +709,37 @@ int main(int argc, const char **argv) {
 
                 delete(id);
             } else {
-                puts(ERR_INCORRECT_INPUT);
+                errorCode = ERR_INCORRECT_INPUT;
             }
         } else if (!strcmp(cmd, "exit")) {
-            free(string);
-            break;
+            errorCode = EXIT;
         } else {
-            puts("error: command not found");
+            errorCode = ERR_NO_COMMAND;
+        }
+
+        free(string);
+
+        switch (errorCode) {
+            case 0:
+                break;
+
+            case ERR_NO_COMMAND:
+                puts("error: command not found");
+                break;
+
+            case ERR_INCORRECT_INPUT:
+                puts("error: incorrect input");
+                break;
+
+            default:
+                break;
+        }
+
+        if (errorCode == EXIT) {
+            break;
         }
 
         fflush(stdout);
-        free(string);
     }
 
     writeHeader();
