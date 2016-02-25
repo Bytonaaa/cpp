@@ -23,12 +23,13 @@
 
 #define SIZE_OF_ROOT_OFFSET 0x1040
 #define SIZE_OF_TABLE_ENTRY sizeof(uint32_t)
+#define SIZE_OF_CONTACT_ENTRY sizeof(uint32_t)
 
 #define BLOCKS_PER_TABLE 1024
+#define BLOCK_BITS 10
 #define FREE_BLOCKS_IN_NEW_TABLE 1020
 #define FREE_BLOCKS_IN_NEW_FILE 1018
 #define MAX_BLOCK 0x3FF
-#define BLOCK_BITS 10
 
 #define SIGNATURE_BLOCK 0x0
 #define FREE_BLOCKS_BLOCK 0x1
@@ -36,6 +37,9 @@
 #define ROOT_BLOCK 0x4
 
 #define BLOCK_SIZE 16
+
+#define ERROR_INCORRECT_INPUT "error: Incorrect input"
+#define ERROR_NO_COMMAND "error: command not found"
 ///////////////////////////////////////////////////
 
 #ifndef __x86_64__
@@ -45,7 +49,7 @@
 #error "Windows must die!"
 #endif
 #if !(defined(__APPLE__) || defined(__linux__))
-#warning "This was only tested on Linux and OS X. Use it at own risk!"
+#warning "It was only tested on Linux and OS X. Use it at own risk!"
 #endif
 
 FILE *file;
@@ -53,7 +57,7 @@ uint32_t sizeOfRoot;
 uint32_t entriesUsed;
 
 uint32_t tableBuf[BLOCKS_PER_TABLE];
-uint64_t curTableId;
+uint32_t curTableId;
 
 
 typedef struct Contact {
@@ -81,7 +85,7 @@ void readHeader(void) {
 
 //Save table to file
 void flushCurTable(void) {
-    fseek(file, CHUNK_SIZE * (long) curTableId, SEEK_SET);
+    fseek(file, (long) curTableId * CHUNK_SIZE, SEEK_SET);
     fwrite(tableBuf, TABLE_SIZE, 1, file);
 }
 
@@ -102,7 +106,7 @@ void changeTable(uint32_t block) {
 
         curTableId = (block >> BLOCK_BITS);
 
-        long tablePos = (long) CHUNK_SIZE * curTableId;
+        long tablePos = (long) curTableId * CHUNK_SIZE;
 
         fseek(file, tablePos, SEEK_SET);
         fread(tableBuf, TABLE_SIZE, 1, file);
@@ -126,11 +130,11 @@ void createTable(uint32_t table) {
     tableBuf[SIGNATURE_BLOCK] = FILE_SIGNATURE;
     tableBuf[FREE_BLOCKS_BLOCK] = FREE_BLOCKS_IN_NEW_TABLE;
 
-    fseek(file, CHUNK_SIZE * table, SEEK_SET);
+    fseek(file, (long) table * CHUNK_SIZE, SEEK_SET);
     fwrite(tableBuf, TABLE_SIZE, 1, file);
 
     changeTable(0);
-    tableBuf[3]++;
+    tableBuf[NUMBER_OF_TABLES_BLOCK]++;
 }
 
 //returns the next block in the chain
@@ -144,10 +148,10 @@ uint32_t getNextBlock(uint32_t block) {
     return tableBuf[block & MAX_BLOCK];
 }
 
-//OK?
+//
 uint32_t getBlockFromRootById(uint64_t id) {
-    uint64_t offset = 0x10 + 0x8 * (id - 1);    //
-    uint64_t len = offset >> 4;
+    uint64_t offset = 0x10 + 0x8 * (id - 1);
+    uint64_t len = offset >> SIZE_OF_CONTACT_ENTRY;
 
     uint32_t block = ROOT_BLOCK;
     while (len--) {
@@ -156,13 +160,13 @@ uint32_t getBlockFromRootById(uint64_t id) {
     return block;
 }
 
-//Bug fixed!
+//allocates a free block
 uint32_t allocBlock(void) {
     uint32_t table = 0;
     uint32_t block = 0;
 
     changeTable(0);
-    uint32_t numOfTables = tableBuf[3];
+    uint32_t numOfTables = tableBuf[NUMBER_OF_TABLES_BLOCK];
 
     while (block == 0) {
         if (table == numOfTables) {
@@ -170,14 +174,14 @@ uint32_t allocBlock(void) {
             numOfTables++;
         }
 
-        changeTable(0x400 * table++);
+        changeTable(BLOCKS_PER_TABLE * table++);
 
-        if (tableBuf[1]) {  //if any empty blocks are present in the table
-            for (int i = 4; i < 1024; i++) {
+        if (tableBuf[FREE_BLOCKS_BLOCK]) {  //if any empty blocks are present in the table
+            for (int i = 4; i < BLOCKS_PER_TABLE; i++) {
                 if (tableBuf[i] == 0) {
                     tableBuf[i] = EOC;
                     block = (curTableId << BLOCK_BITS) + i;
-                    tableBuf[1]--;
+                    tableBuf[FREE_BLOCKS_BLOCK]--;
                     break;
                 }
             }
@@ -191,7 +195,7 @@ uint32_t allocBlock(void) {
 //returns NULL if it reached to the end of chain
 //TODO: Remove static
 void *readBlock(uint32_t block) {
-    static uint32_t data[4];
+    static uint32_t data[BLOCK_SIZE / sizeof(uint32_t)];
 
     if (block == EOC) {
         return NULL;
@@ -199,9 +203,9 @@ void *readBlock(uint32_t block) {
 
     changeTable(block);
 
-    long pos = (long) 0x5000 * curTableId + 0x1000 + (block & 0x3FF) * 0x10;
+    long pos = (long) CHUNK_SIZE * curTableId + TABLE_SIZE + (block & MAX_BLOCK) * BLOCK_SIZE;
     fseek(file, pos, SEEK_SET);
-    fread(data, sizeof(uint32_t), 4, file);
+    fread(data, BLOCK_SIZE, 1, file);
 
     return data;
 }
@@ -223,10 +227,10 @@ size_t writeBlock(uint32_t block, void *data) {
 //writes NULL to table by number of block
 void deleteBlock(uint32_t block) {
     writeTable(block, 0);
-    tableBuf[0x1]++;    //contains number of free blocks in the table
+    tableBuf[FREE_BLOCKS_BLOCK]++;    //contains number of free blocks in the table
 }
 
-//reads string from file by blockid
+//reads string from file by number of block
 char *readString(uint32_t block) {
     char *result, *ptr, *data;
 
@@ -239,7 +243,7 @@ char *readString(uint32_t block) {
 
     result = ptr = (char *) malloc(len + 1);
 
-    for (int i = 0; i < 12 && len; i++) { //the first block contains only 12 chars
+    for (int i = 0; i < 12 && len; i++) { //the first block contains 12 chars only
         *(ptr++) = data[4 + i];
         len--;
     }
@@ -265,13 +269,13 @@ char *readString(uint32_t block) {
 
 //creates new string in file and returns blockid
 uint32_t writeString(char *str) {
-    char data[16];
+    char data[BLOCK_SIZE];
     uint32_t len = (uint32_t) strlen(str);
     uint32_t firstBlock = allocBlock();
     uint32_t lastBlock, block;
 
     *(uint32_t *) data = len;
-    for (int i = 0; i < 12 && len; i++) {
+    for (int i = 0; i < 12 && len; i++) {   //first block contains 12 chars only
         data[4 + i] = *(str++);
         len--;
     }
@@ -603,7 +607,7 @@ char *readCommand(void) {
         len += READ_BUFFER_SIZE;
         cmd = realloc(cmd, len);
         fgets(cmd, READ_BUFFER_SIZE, stdin);
-    } while (!feof(stdin));
+    } while (feof(stdin));
 
     return cmd;
 }
@@ -618,7 +622,8 @@ int isNumber(char *str) {
 }
 
 //TODO: Reach scanf limit of 4K characters;
-#define DELIM " \0"
+#define DELIM " "
+
 int main(int argc, const char **argv) {
     if (argc < 2)
         return 1;
@@ -633,8 +638,10 @@ int main(int argc, const char **argv) {
         char *string = readCommand();
 
         char *cmd = strtok(string, DELIM);
-        if (cmd == NULL)
+        if (cmd == NULL) {
+            free(string);
             continue;
+        }
 
         if (!strcmp(cmd, "create")) {
             char *name = strtok(NULL, DELIM);
@@ -647,8 +654,9 @@ int main(int argc, const char **argv) {
             find(str);
         } else if (!strcmp(cmd, "change")) {
             char *idStr = strtok(NULL, DELIM);
+
             if (isNumber(idStr)) {
-                uint64_t id = ato64(strtok(NULL, DELIM));
+                uint64_t id = ato64(idStr);
                 char *subcmd = strtok(NULL, DELIM);
                 char *str = strtok(NULL, DELIM);
 
@@ -657,20 +665,20 @@ int main(int argc, const char **argv) {
                 } else if (!strcmp(subcmd, "number")) {
                     changeNumber(id, str);
                 } else {
-                    puts("error: Incorrect input");
+                    puts(ERROR_INCORRECT_INPUT);
                 }
             } else {
-                puts("error: Incorrect input");
+                puts(ERROR_INCORRECT_INPUT);
             }
-
         } else if (!strcmp(cmd, "delete")) {
             char *idStr = strtok(NULL, DELIM);
+
             if (isNumber(idStr)) {
                 uint64_t id = ato64(idStr);
 
                 delete(id);
             } else {
-                puts("error: Incorrect input");
+                puts(ERROR_INCORRECT_INPUT);
             }
         } else if (!strcmp(cmd, "exit")) {
             free(string);
