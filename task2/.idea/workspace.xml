@@ -39,14 +39,13 @@
       <file leaf-file-name="main.c" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.89032257">
-              <caret line="122" column="20" selection-start-line="122" selection-start-column="20" selection-end-line="122" selection-end-column="20" />
+            <state vertical-scroll-proportion="0.43890274">
+              <caret line="699" column="17" selection-start-line="699" selection-start-column="17" selection-end-line="699" selection-end-column="17" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
-                <element signature="e#146#165#0" expanded="true" />
-                <element signature="e#559#604#0" expanded="true" />
-                <element signature="e#626#652#0" expanded="true" />
-                <element signature="e#708#783#0" expanded="true" />
+                <element signature="e#1066#1111#0" expanded="true" />
+                <element signature="e#1133#1159#0" expanded="true" />
+                <element signature="e#1215#1283#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -82,6 +81,7 @@
   <component name="JsGulpfileManager">
     <detection-done>true</detection-done>
   </component>
+  <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
     <option name="width" value="1440" />
     <option name="height" value="900" />
@@ -227,7 +227,6 @@
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32650602" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32891566" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32891566" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32891566" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33975902" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24947146" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -239,6 +238,7 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32891566" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
@@ -283,11 +283,11 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.c</url>
-          <line>354</line>
+          <line>361</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="11" />
+      <option name="time" value="18" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -298,10 +298,30 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#146#165#0" expanded="true" />
-            <element signature="e#559#604#0" expanded="true" />
-            <element signature="e#626#652#0" expanded="true" />
-            <element signature="e#708#783#0" expanded="true" />
+            <element signature="e#1066#1111#0" expanded="true" />
+            <element signature="e#1133#1159#0" expanded="true" />
+            <element signature="e#1215#1283#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="35" selection-start-line="0" selection-start-column="34" selection-end-line="0" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+            <element signature="e#1066#1111#0" expanded="true" />
+            <element signature="e#1133#1159#0" expanded="true" />
+            <element signature="e#1215#1283#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -320,10 +340,9 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#146#165#0" expanded="true" />
-            <element signature="e#559#604#0" expanded="true" />
-            <element signature="e#626#652#0" expanded="true" />
-            <element signature="e#708#783#0" expanded="true" />
+            <element signature="e#1066#1111#0" expanded="true" />
+            <element signature="e#1133#1159#0" expanded="true" />
+            <element signature="e#1215#1283#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -342,10 +361,9 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#146#165#0" expanded="true" />
-            <element signature="e#559#604#0" expanded="true" />
-            <element signature="e#626#652#0" expanded="true" />
-            <element signature="e#708#783#0" expanded="true" />
+            <element signature="e#1066#1111#0" expanded="true" />
+            <element signature="e#1133#1159#0" expanded="true" />
+            <element signature="e#1215#1283#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -389,14 +407,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/main.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.89032257">
-          <caret line="122" column="20" selection-start-line="122" selection-start-column="20" selection-end-line="122" selection-end-column="20" />
+        <state vertical-scroll-proportion="0.43890274">
+          <caret line="699" column="17" selection-start-line="699" selection-start-column="17" selection-end-line="699" selection-end-column="17" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#146#165#0" expanded="true" />
-            <element signature="e#559#604#0" expanded="true" />
-            <element signature="e#626#652#0" expanded="true" />
-            <element signature="e#708#783#0" expanded="true" />
+            <element signature="e#1066#1111#0" expanded="true" />
+            <element signature="e#1133#1159#0" expanded="true" />
+            <element signature="e#1215#1283#0" expanded="true" />
           </folding>
         </state>
       </provider>
