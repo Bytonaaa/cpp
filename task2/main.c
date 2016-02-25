@@ -18,6 +18,8 @@
 
 #define FILE_SIGNATURE 0x746e6f43
 
+#define READ_BUFFER_SIZE 4096
+
 #define TABLE_SIZE ((size_t) 4096)
 #define CHUNK_SIZE ((size_t) 0x5000)
 
@@ -605,15 +607,15 @@ void createContact(char *name, char *number) {
 //I dunno hot to use read
 //and fgets
 char *getLine(void) {
-    char *buffer = malloc(BUFSIZ);
-    char *line = NULL;
+    char *buffer = malloc(READ_BUFFER_SIZE);
+    char *line = calloc(1, 1);  //чтобы не обнулять строку в цикле
     size_t len = 0;
 
     for (; ;) {
-        len += BUFSIZ;
+        len += READ_BUFFER_SIZE;
         line = realloc(line, len);
 
-        fgets(buffer, BUFSIZ, stdin);
+        fgets(buffer, READ_BUFFER_SIZE, stdin);
         strcat(line, buffer);
 
         size_t l = strlen(buffer);
@@ -639,9 +641,52 @@ bool isNumber(char *str) {
     return true;
 }
 
-//TODO: Reach scanf limit of 4K characters;
-#define DELIM " \n"
+char *checkName(char *name) {
+    if (name == NULL)
+        return NULL;
 
+    for (int i = 0; name[i]; i++) {
+        if (!((name[i] > 0) && isalpha(name[i]))) {
+            return NULL;
+        }
+    }
+    return name;
+}
+
+char *checkNumber(char *number) {
+    if (number == NULL)
+        return NULL;
+
+    int brackets = 0;
+    for (int i = 0; number[i]; i++) {
+        if (!(isdigit(number[i]) || isgraph(number[i])))
+            return NULL;
+
+        if (number[i] == '+')
+            if (i != 0)
+                return NULL;
+
+        if (number[i] == '(')
+            if (brackets == 0)
+                brackets = 1;
+            else
+                return NULL;
+
+        if (number[i] == ')')
+            if (brackets == 1)
+                brackets = 2;
+            else
+                return NULL;
+
+        if (number[i] == '-')
+            if (number[i + 1] == '-')
+                return NULL;
+    }
+    return number;
+}
+
+//TODO: Reach scanf limit of 4K characters;
+#define DELIM " \r\n"
 int main(int argc, const char **argv) {
     if (argc < 2)
         return 1;
@@ -665,6 +710,9 @@ int main(int argc, const char **argv) {
         if (!strcmp(cmd, "create")) {
             char *name = strtok(NULL, DELIM);
             char *number = strtok(NULL, DELIM);
+
+            name = checkName(name);
+            number = checkNumber(number);
 
             if (name && number) {
                 createContact(name, number);
