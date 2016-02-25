@@ -17,16 +17,14 @@
 
 #define FILE_SIGNATURE 0x746e6f43
 
-#define READ_BUFFER_SIZE ((size_t) 4096)
 #define TABLE_SIZE ((size_t) 4096)
 #define CHUNK_SIZE ((size_t) 0x5000)
 
-#define SIZE_OF_ROOT_OFFSET 0x1040
 #define SIZE_OF_TABLE_ENTRY sizeof(uint32_t)
-#define SIZE_OF_CONTACT_ENTRY sizeof(uint32_t)
+#define SIZE_OF_CONTACT_ENTRY (2 * SIZE_OF_TABLE_ENTRY)
 
 #define BLOCKS_PER_TABLE 1024
-#define BLOCK_BITS 10
+#define TABLE_BITS 10
 #define FREE_BLOCKS_IN_NEW_TABLE 1020
 #define FREE_BLOCKS_IN_NEW_FILE 1018
 #define MAX_BLOCK 0x3FF
@@ -37,9 +35,12 @@
 #define ROOT_BLOCK 0x4
 
 #define BLOCK_SIZE 16
+#define BLOCK_BITS 4
 
-#define ERROR_INCORRECT_INPUT "error: Incorrect input"
-#define ERROR_NO_COMMAND "error: command not found"
+#define ROOT_OFFSET (TABLE_SIZE + 4 * BLOCK_SIZE)
+
+#define ERR_INCORRECT_INPUT "error: incorrect input"
+#define ERR_NO_COMMAND "error: command not found"
 ///////////////////////////////////////////////////
 
 #ifndef __x86_64__
@@ -72,9 +73,9 @@ void readHeader(void) {
     fread(tableBuf, TABLE_SIZE, 1, file);
     curTableId = 0;
 
-    fseek(file, SIZE_OF_ROOT_OFFSET, SEEK_SET);
-    fread(&sizeOfRoot, sizeof(uint32_t), 1, file);
-    fread(&entriesUsed, sizeof(uint32_t), 1, file);
+    fseek(file, ROOT_OFFSET, SEEK_SET);
+    fread(&sizeOfRoot, sizeof(sizeOfRoot), 1, file);
+    fread(&entriesUsed, sizeof(entriesUsed), 1, file);
 
     //Signature check
     if (tableBuf[SIGNATURE_BLOCK] != FILE_SIGNATURE) {
@@ -93,18 +94,18 @@ void flushCurTable(void) {
 void writeHeader(void) {
     flushCurTable();
 
-    fseek(file, SIZE_OF_ROOT_OFFSET, SEEK_SET);
+    fseek(file, ROOT_OFFSET, SEEK_SET);
 
-    fwrite(&sizeOfRoot, sizeof(uint32_t), 1, file);
-    fwrite(&entriesUsed, sizeof(uint32_t), 1, file);
+    fwrite(&sizeOfRoot, sizeof(sizeOfRoot), 1, file);
+    fwrite(&entriesUsed, sizeof(entriesUsed), 1, file);
 }
 
 //loads another table into buffer if it is necessary
 void changeTable(uint32_t block) {
-    if (curTableId != (block >> BLOCK_BITS)) {
+    if (curTableId != (block >> TABLE_BITS)) {
         flushCurTable();
 
-        curTableId = (block >> BLOCK_BITS);
+        curTableId = (block >> TABLE_BITS);
 
         long tablePos = (long) curTableId * CHUNK_SIZE;
 
@@ -120,7 +121,7 @@ void writeTable(uint32_t block, uint32_t value) {
     tableBuf[block & MAX_BLOCK] = value;
 }
 
-//TODO: Possible bug
+//creates new table
 void createTable(uint32_t table) {
     flushCurTable();
     memset(tableBuf, 0, TABLE_SIZE);
@@ -150,8 +151,8 @@ uint32_t getNextBlock(uint32_t block) {
 
 //
 uint32_t getBlockFromRootById(uint64_t id) {
-    uint64_t offset = 0x10 + 0x8 * (id - 1);
-    uint64_t len = offset >> SIZE_OF_CONTACT_ENTRY;
+    uint64_t offset = BLOCK_SIZE + SIZE_OF_CONTACT_ENTRY * (id - 1);
+    uint64_t len = offset >> BLOCK_BITS;
 
     uint32_t block = ROOT_BLOCK;
     while (len--) {
@@ -180,7 +181,7 @@ uint32_t allocBlock(void) {
             for (int i = 4; i < BLOCKS_PER_TABLE; i++) {
                 if (tableBuf[i] == 0) {
                     tableBuf[i] = EOC;
-                    block = (curTableId << BLOCK_BITS) + i;
+                    block = (curTableId << TABLE_BITS) + i;
                     tableBuf[FREE_BLOCKS_BLOCK]--;
                     break;
                 }
@@ -193,7 +194,7 @@ uint32_t allocBlock(void) {
 
 
 //returns NULL if it reached to the end of chain
-//TODO: Remove static
+//TODO: Remove static, but for what?
 void *readBlock(uint32_t block) {
     static uint32_t data[BLOCK_SIZE / sizeof(uint32_t)];
 
@@ -366,7 +367,7 @@ uint64_t findEmptyId(void) {
 
             return sizeOfRoot;
         } else {
-            uint32_t block = 0x4;
+            uint32_t block = ROOT_BLOCK;
             for (; ;) {
                 uint32_t nextBlock = getNextBlock(block);
                 if (nextBlock == EOC) {
@@ -502,6 +503,7 @@ void delete(uint64_t id) {
 
 //parses num string to uint64_t
 //c99 do not support atoll()
+//i use this method after checking str for digits
 uint64_t ato64(const char *str) {
     uint64_t result = 0;
     while (*str) {
@@ -532,7 +534,7 @@ FILE *createFile(const char *name) {
     sizeOfRoot = 1;
     entriesUsed = 0;
 
-    fseek(fp, SIZE_OF_ROOT_OFFSET, SEEK_SET);
+    fseek(fp, ROOT_OFFSET, SEEK_SET);
     fwrite(&sizeOfRoot, sizeof(sizeOfRoot), 1, fp);
     fwrite(&entriesUsed, sizeof(entriesUsed), 1, fp);
 
@@ -598,21 +600,35 @@ void createContact(char *name, char *number) {
 }
 
 //gets a string from stdin
-//TODO:
-char *readCommand(void) {
-    char *cmd = NULL;
-    uint32_t len = 0;
+//I dunno hot to use read
+//and fgets
+char *getLine(void) {
+    char *buffer = malloc(BUFSIZ);
+    char *line = NULL;
+    size_t len = 0;
 
-    do {
-        len += READ_BUFFER_SIZE;
-        cmd = realloc(cmd, len);
-        fgets(cmd, READ_BUFFER_SIZE, stdin);
-    } while (feof(stdin));
+    for (; ;) {
+        len += BUFSIZ;
+        line = realloc(line, len);
 
-    return cmd;
+        fgets(buffer, BUFSIZ, stdin);
+        strcat(line, buffer);
+
+        size_t l = strlen(buffer);
+        if (buffer[l - 1] == '\n') {
+            break;
+        }
+    }
+
+    free(buffer);
+    return line;
 }
 
-int isNumber(char *str) {
+bool isNumber(char *str) {
+    if (str == NULL) {
+        return false;
+    }
+
     while (*str) {
         if (!isdigit(*(str++))) {
             return false;
@@ -622,7 +638,7 @@ int isNumber(char *str) {
 }
 
 //TODO: Reach scanf limit of 4K characters;
-#define DELIM " "
+#define DELIM " \n"
 
 int main(int argc, const char **argv) {
     if (argc < 2)
@@ -635,7 +651,7 @@ int main(int argc, const char **argv) {
     readHeader();
 
     for (; ;) {
-        char *string = readCommand();
+        char *string = getLine();
 
         char *cmd = strtok(string, DELIM);
         if (cmd == NULL) {
@@ -651,7 +667,11 @@ int main(int argc, const char **argv) {
         } else if (!strcmp(cmd, "find")) {
             char *str = strtok(NULL, DELIM);
 
-            find(str);
+            if (str) {
+                find(str);
+            } else {
+                puts("usage: find <name/number>");
+            }
         } else if (!strcmp(cmd, "change")) {
             char *idStr = strtok(NULL, DELIM);
 
@@ -665,10 +685,10 @@ int main(int argc, const char **argv) {
                 } else if (!strcmp(subcmd, "number")) {
                     changeNumber(id, str);
                 } else {
-                    puts(ERROR_INCORRECT_INPUT);
+                    puts(ERR_INCORRECT_INPUT);
                 }
             } else {
-                puts(ERROR_INCORRECT_INPUT);
+                puts(ERR_INCORRECT_INPUT);
             }
         } else if (!strcmp(cmd, "delete")) {
             char *idStr = strtok(NULL, DELIM);
@@ -678,7 +698,7 @@ int main(int argc, const char **argv) {
 
                 delete(id);
             } else {
-                puts(ERROR_INCORRECT_INPUT);
+                puts(ERR_INCORRECT_INPUT);
             }
         } else if (!strcmp(cmd, "exit")) {
             free(string);
