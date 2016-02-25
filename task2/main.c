@@ -605,6 +605,7 @@ void createContact(char *name, char *number) {
 
 //gets a string from stdin
 //I dunno hot to use read
+//and fgets
 char *getLine(void) {
     char *buffer = malloc(READ_BUFFER_SIZE);
     char *line = calloc(1, 1);  //чтобы не обнулять строку в цикле
@@ -652,13 +653,22 @@ char *checkName(char *name) {
     return name;
 }
 
+bool isTelChars(char c) {
+    char chars[] = "+-()";
+    bool ret = false;
+    for (int i = 0; chars[i]; i++)
+        if (c == chars[i])
+            ret = true;
+    return ret;
+}
+
 char *checkNumber(char *number) {
     if (number == NULL)
         return NULL;
 
     int brackets = 0;
     for (int i = 0; number[i]; i++) {
-        if (!(isdigit(number[i]) || isgraph(number[i])))
+        if (!(isdigit(number[i]) || isTelChars(number[i])))
             return NULL;
 
         if (number[i] == '+')
@@ -734,10 +744,13 @@ int main(int argc, const char **argv) {
                 char *subcmd = strtok(NULL, DELIM);
                 char *str = strtok(NULL, DELIM);
 
+                bool isCorName = (bool) checkName(str);
+                bool isCorNumber = (bool) checkNumber(str);
+
                 if (subcmd && str) {
-                    if (!strcmp(subcmd, "name")) {
+                    if (!strcmp(subcmd, "name") && isCorName) {
                         changeName(id, str);
-                    } else if (!strcmp(subcmd, "number")) {
+                    } else if (!strcmp(subcmd, "number") && isCorNumber) {
                         changeNumber(id, str);
                     } else {
                         errorCode = ERR_INCORRECT_INPUT;
