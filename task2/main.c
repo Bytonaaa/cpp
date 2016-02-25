@@ -605,7 +605,6 @@ void createContact(char *name, char *number) {
 
 //gets a string from stdin
 //I dunno hot to use read
-//and fgets
 char *getLine(void) {
     char *buffer = malloc(READ_BUFFER_SIZE);
     char *line = calloc(1, 1);  //чтобы не обнулять строку в цикле
