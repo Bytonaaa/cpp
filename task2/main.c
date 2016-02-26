@@ -3,13 +3,13 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <setjmp.h>
 
 //Sorry for my bad english
 
 #ifdef __linux__    //CLion's reformat removes this include on Mac
 
 #include <stdint.h>
+#include <signal.h>
 
 #endif
 
@@ -671,31 +671,39 @@ char *checkNumber(char *number) {
         if (!(isdigit(number[i]) || isTelChars(number[i])))
             return NULL;
 
-        if (number[i] == '+')
-            if (i != 0)
-                return NULL;
+        if (number[i] == '+' && i != 0)
+            return NULL;
 
-        if (number[i] == '(')
+        if (number[i] == '(') {
             if (brackets == 0)
                 brackets = 1;
             else
                 return NULL;
+        }
 
-        if (number[i] == ')')
+        if (number[i] == ')') {
             if (brackets == 1)
                 brackets = 2;
             else
                 return NULL;
+        }
 
-        if (number[i] == '-')
-            if (number[i + 1] == '-')
-                return NULL;
+        if (number[i] == '-' && number[i + 1] == '-')
+            return NULL;
     }
     return number;
 }
 
+void exitInterruptHandler(int code) {
+    writeHeader();
+    fclose(file);
+
+    exit(EXIT_SUCCESS);
+}
+
 //TODO: Reach scanf limit of 4K characters;
 #define DELIM " \r\n"
+
 int main(int argc, const char **argv) {
     if (argc < 2)
         return 1;
@@ -705,6 +713,8 @@ int main(int argc, const char **argv) {
         file = createFile(argv[1]);
     }
     readHeader();
+
+    signal(SIGINT, exitInterruptHandler);
 
     for (; ;) {
         char *string = getLine();
@@ -804,4 +814,6 @@ int main(int argc, const char **argv) {
 
     writeHeader();
     fclose(file);
+
+    return EXIT_SUCCESS;
 }
