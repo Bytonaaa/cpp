@@ -20,7 +20,7 @@ int rational::getDenom() const {
     return denominator;
 }
 
-const rational rational::operator+(const rational &thiz) {
+const rational &rational::operator+(const rational &thiz) {
     int a = getNum();
     int b = getDenom();
     int c = thiz.getNum();
@@ -28,7 +28,7 @@ const rational rational::operator+(const rational &thiz) {
     return rational(a * d + b * c, b * d);
 }
 
-const rational rational::operator-(const rational &thiz) {
+const rational &rational::operator-(const rational &thiz) {
     int a = getNum();
     int b = getDenom();
     int c = thiz.getNum();
@@ -36,11 +36,11 @@ const rational rational::operator-(const rational &thiz) {
     return rational(a * d - b * c, b * d);
 }
 
-const rational rational::operator*(const rational &b) {
+const rational &rational::operator*(const rational &b) {
     return rational(numerator * b.numerator, denominator * b.denominator);
 }
 
-const rational rational::operator/(const rational &b) {
+const rational &rational::operator/(const rational &b) {
     return rational(numerator * b.denominator, denominator * b.numerator);
 }
 

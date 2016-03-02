@@ -14,10 +14,10 @@ public:
     int getNum() const;
     int getDenom() const;
 
-    const rational operator+(const rational &thiz);
-    const rational operator-(const rational &thiz);
-    const rational operator*(const rational &b);
-    const rational operator/(const rational &b);
+    const rational &operator+(const rational &thiz);
+    const rational &operator-(const rational &thiz);
+    const rational &operator*(const rational &b);
+    const rational &operator/(const rational &b);
 };
 
 #endif //TASK3_RATIONAL_H
