@@ -1,5 +1,4 @@
 #include "rational.h"
-#include <string>
 
 rational::rational(int num) {
     numerator = num;
@@ -53,12 +52,4 @@ int rational::gcd(int a, int b) {
             b -= a;
 
     return a;
-}
-
-int main() {
-    std::string strt = "ghost";
-    rational a(4,1);
-    rational b(1,2);
-
-    auto v = a + b;
 }
