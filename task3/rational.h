@@ -9,15 +9,20 @@ class rational {
 
 public:
     rational(int num);
+
     rational(int num, int denom);
 
     int getNum() const;
+
     int getDenom() const;
 
-    const rational &operator+(const rational &thiz);
-    const rational &operator-(const rational &thiz);
-    const rational &operator*(const rational &b);
-    const rational &operator/(const rational &b);
+    const rational operator+(const rational &thiz) const;
+
+    const rational operator-(const rational &thiz) const;
+
+    const rational operator*(const rational &b) const;
+
+    const rational operator/(const rational &b) const;
 };
 
 #endif //TASK3_RATIONAL_H
