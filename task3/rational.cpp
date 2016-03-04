@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "rational.h"
 //num = 0 and denom = 0 work like NaN
 
