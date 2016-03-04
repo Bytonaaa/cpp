@@ -1,4 +1,5 @@
 #include "rational.h"
+//num = 0 and denom = 0 work like NaN
 
 rational::rational(int num) {
     numerator = num;
@@ -6,7 +7,14 @@ rational::rational(int num) {
 }
 
 rational::rational(int num, int denom) {
-    int g = gcd(num, denom);
+    if (denom < 0) {
+        num = -num;
+        denom = -denom;
+    }
+    
+    int g = denom ? denom : 1;
+    if (num)
+        int g = gcd(abs(num), denom);
 
     numerator = num / g;
     denominator = denom / g;
@@ -20,7 +28,7 @@ int rational::getDenom() const {
     return denominator;
 }
 
-const rational rational::operator+(const rational &thiz) const {
+rational rational::operator+(const rational &thiz) const {
     int a = getNum();
     int b = getDenom();
     int c = thiz.getNum();
@@ -28,7 +36,7 @@ const rational rational::operator+(const rational &thiz) const {
     return rational(a * d + b * c, b * d);
 }
 
-const rational rational::operator-(const rational &thiz) const {
+rational rational::operator-(const rational &thiz) const {
     int a = getNum();
     int b = getDenom();
     int c = thiz.getNum();
@@ -36,11 +44,11 @@ const rational rational::operator-(const rational &thiz) const {
     return rational(a * d - b * c, b * d);
 }
 
-const rational rational::operator*(const rational &b) const {
+rational rational::operator*(const rational &b) const {
     return rational(numerator * b.numerator, denominator * b.denominator);
 }
 
-const rational rational::operator/(const rational &b) const {
+rational rational::operator/(const rational &b) const {
     return rational(numerator * b.denominator, denominator * b.numerator);
 }
 
