@@ -14,7 +14,7 @@ rational::rational(int num, int denom) {
     
     int g = denom ? denom : 1;
     if (num)
-        int g = gcd(abs(num), denom);
+        g = gcd(abs(num), denom);
 
     numerator = num / g;
     denominator = denom / g;
