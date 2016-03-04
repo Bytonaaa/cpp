@@ -13,6 +13,7 @@ rational::rational(int num, int denom) {
         denom = -denom;
     }
     
+    num = denom ? num : 0;
     int g = denom ? denom : 1;
     if (num)
         g = gcd(abs(num), denom);
