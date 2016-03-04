@@ -16,13 +16,13 @@ public:
 
     int getDenom() const;
 
-    const rational operator+(const rational &thiz) const;
+    rational operator+(const rational &thiz) const;
 
-    const rational operator-(const rational &thiz) const;
+    rational operator-(const rational &thiz) const;
 
-    const rational operator*(const rational &b) const;
+    rational operator*(const rational &b) const;
 
-    const rational operator/(const rational &b) const;
+    rational operator/(const rational &b) const;
 };
 
 #endif //TASK3_RATIONAL_H
