@@ -78,6 +78,11 @@ void gen(Format *fmt, unsigned long size, std::string &str, T arg) {
     }
 }
 
+template<typename T>
+int checkForInt(T arg) {
+    throw std::invalid_argument("Invalid argument: expected int");
+}
+
 template<typename T, typename... Args>
 void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args) {
     if (size) {
@@ -86,9 +91,9 @@ void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args)
             gen(fmt + 1, size - 1, str, arg, args...);
         } else {
             if (fmt->width == WP_READ) {
-                fmt->width = arg;   //зачем кидать исключения, если и так компиль заорёт об ошибке?
+                fmt->width = checkForInt(arg);
             } else if (fmt->precision == WP_READ) {
-                fmt->precision = arg;
+                fmt->precision = checkForInt(arg);
             } else {
                 str += sprint(fmt, arg);
                 fmt++;

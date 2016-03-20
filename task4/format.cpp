@@ -223,3 +223,8 @@ void gen(Format *fmt, unsigned long size, std::string &str) {
             throw std::out_of_range("<null>");//TODO
     }
 }
+
+template<>
+int checkForInt<int>(int arg) {
+    return arg;
+}
