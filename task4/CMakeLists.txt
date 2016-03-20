@@ -7,4 +7,4 @@ set(SOURCE_FILES Test.cpp)
 add_executable(Test ${SOURCE_FILES})
 add_library(format format.cpp)
 
-target_link_libraries(Test format)
+#target_link_libraries(Test format)
