@@ -8,6 +8,7 @@
 
 #define WP_READ (-2)
 
+
 enum FormatSpec {
     def,
     d,
@@ -40,7 +41,15 @@ enum FormatSpec {
 
 struct Format {
     std::string str;
-    int flags;
+    union {
+        int flags;
+        struct {
+            bool zero:1;
+            bool plus:1;
+            bool minus:1;
+            bool sharp:1;
+        };
+    };
     int width = -1;
     int precision = -1;
     FormatSpec length;
@@ -59,9 +68,7 @@ std::string sprint(Format const *fmt, T arg) {
     throw std::invalid_argument("Invalid argument, or this feature is not implemented.");
 }
 
-void gen(Format *fmt, unsigned long size, std::string &str);
-
-template<typename T>
+/*template<typename T>
 void gen(Format *fmt, unsigned long size, std::string &str, T arg) {
     if (size) {
         if (fmt->str.size()) {
@@ -69,19 +76,21 @@ void gen(Format *fmt, unsigned long size, std::string &str, T arg) {
             gen(fmt + 1, size - 1, str, arg);
         } else {
             if (fmt->width == WP_READ || fmt->precision == WP_READ)
-                throw std::out_of_range("<null>");//TODO
+                throw std::out_of_range("<null>");
             else
                 str += sprint(fmt, arg);
 
             gen(fmt + 1, size - 1, str);
         }
     }
-}
+}*/
 
 template<typename T>
 int checkForInt(T arg) {
-    throw std::invalid_argument("Invalid argument: expected int");
+    throw std::invalid_argument("Invalid argument: int or unsigned int expected");
 }
+
+void gen(Format *fmt, unsigned long size, std::string &str);
 
 template<typename T, typename... Args>
 void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args) {

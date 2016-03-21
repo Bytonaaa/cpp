@@ -9,6 +9,8 @@ void test(Args... args) {
 }
 
 int main() {
-    printf("%+010d 45345\n", 12);
-    std::cout << format("s: %*.*d d: %d g: %d, float: %f", 111, 222, 333, 3434, 43534, 435345.34);
+    //printf("%-#+010d %0+-10d\n", 12, 12);
+    std::cout << format("s: %*.*u d: %d g: %d, float: %f, char: %c, char string: %s, std string: %s", (unsigned)111, 222, (unsigned)UINT32_MAX, 3434, 43534, 435345.34, '#', "Suka nah", std::string("+100500"));
+    char *test = (char*)"sdfsdfds";
+    std::cout << format("%s", nullptr);
 }

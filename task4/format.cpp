@@ -17,13 +17,8 @@ public:
             if (*next == '\0')
                 throw std::invalid_argument("Unexpected end of format string");
 
-            while (*next != '\0') {
-                if (int flags = checkForFlags()) {
-                    fmt.flags |= flags;
-                    continue;
-                } else
-                    break;
-            }
+
+            checkForFlags(fmt);
 
             if (isdigit(*next))
                 fmt.width = readNumber();
@@ -53,19 +48,31 @@ public:
     }
 
 private:
-    int checkForFlags() {
-        switch (*next) {
-            case '0':
-                return 1;
-            case '+':
-                return 2;
-            case '-':
-                return 4;
-            case '#':
-                return 8;
+    void checkForFlags(Format &fmt) {
+        bool ok = true;
+        while (ok) {
+            switch (*next) {
+                case '0':
+                    fmt.zero = true;
+                    break;
+                case '+':
+                    fmt.plus = true;
+                    break;
+                case '-':
+                    fmt.minus = true;
+                    break;
+                case '#':
+                    fmt.sharp = true;
+                    break;
 
-            default:
-                return 0;
+                case '\0':
+                    throw std::invalid_argument("Invalid format");
+
+                default:
+                    ok = false;
+                    next--;
+            }
+            next++;
         }
     }
 
@@ -116,6 +123,7 @@ private:
         }
         next++;
     }
+
     void checkForSpec(Format &fmt) {
         switch (*next) {
             case 'd':
@@ -134,10 +142,10 @@ private:
                 fmt.spec = X;
                 break;
             case 'f':
-                fmt.spec = f;
-                break;
             case 'F':
-                fmt.spec = F;
+                if (fmt.precision == -1)
+                    fmt.precision = 6;
+                fmt.spec = f;
                 break;
             case 'e':
                 fmt.spec = e;
@@ -186,28 +194,110 @@ void parse(std::vector<Format> &fmt, const char *format) {
     }
 }
 
+std::string sprintFloat(Format const *fmt, double d) {
+    union {
+        double a;
+        struct {
+            unsigned s : 1;
+            unsigned p : 11;
+            unsigned long long m : 52;
+        };
+    } Float, tmp;
+    Float.a = d;
+    std::string result;
+
+    return std::to_string(d);
+}
+
+std::string sprintChar(Format const *fmt, char c) {
+    std::string s;
+    s.push_back(c);
+    return s;
+}
+
 template<>
-std::string sprint<int>(Format const *fmt, int arg) {
+std::string sprint(Format const *fmt, int arg) {
     if (fmt->spec == d)
         return std::to_string(arg);
     else
-        throw std::invalid_argument("Invalid argument");
+        throw std::invalid_argument("Invalid argument: int found");
 }
 
 template<>
-std::string sprint<double>(Format const *fmt, double arg) {
-    if (fmt->spec == f || fmt->spec == F)
+std::string sprint(Format const *fmt, unsigned int arg) {
+    if (fmt->spec == u)
         return std::to_string(arg);
     else
-        throw std::invalid_argument("Invalid argument");
+        throw std::invalid_argument("Invalid argument: unsigned int found");
 }
 
 template<>
-std::string sprint<float>(Format const *fmt, float arg) {
+std::string sprint(Format const *fmt, double arg) {
     if (fmt->spec == f || fmt->spec == F)
+        return sprintFloat(fmt, arg);
+    else
+        throw std::invalid_argument("Invalid argument: double found");
+}
+
+template<>
+std::string sprint(Format const *fmt, float arg) {
+    if (fmt->spec == f || fmt->spec == F)
+        return sprintFloat(fmt, arg);
+    else
+        throw std::invalid_argument("Invalid argument: float found");
+}
+
+template<>
+std::string sprint<std::string>(Format const *fmt, std::string arg) {
+    if (fmt->spec == s)
+        return arg;
+    else
+        throw std::invalid_argument("Invalid argument: std::string found");
+}
+
+template<>
+std::string sprint(Format const *fmt, const char *arg) {
+    if (arg == NULL)
+        throw std::invalid_argument("Invalid argument: null pointer found");
+
+    if (fmt->spec == s)
+        return sprint<std::string>(fmt, arg);
+    else
+        throw std::invalid_argument("Invalid argument: char* found");
+}
+
+template<>
+std::string sprint(Format const *fmt, char *arg) {
+    return sprint(fmt, (const char*)arg);
+}
+
+template<>
+std::string sprint(Format const *fmt, char arg) {
+    if (fmt->spec == c)
+        return sprintChar(fmt, arg);
+    else
+        throw std::invalid_argument("Invalid argument: char found");
+}
+
+template<>
+std::string sprint(Format const *fmt, long long arg) {
+    if (fmt->spec == d && fmt->length == ll)
         return std::to_string(arg);
     else
-        throw std::invalid_argument("Invalid argument");
+        throw std::invalid_argument("Invalid argument: long long found");
+}
+
+template<>
+std::string sprint(Format const *fmt, unsigned long long arg) {
+    if (fmt->spec == u && fmt->length == ll)
+        return std::to_string(arg);
+    else
+        throw std::invalid_argument("");
+}
+
+template<>
+std::string sprint(Format const *fmt, std::nullptr_t arg) {
+    throw std::invalid_argument("Invalid argument: nullptr found");
 }
 
 std::string format(std::string const &format) {
@@ -220,11 +310,21 @@ void gen(Format *fmt, unsigned long size, std::string &str) {
             str += fmt->str;
             gen(fmt + 1, size - 1, str);
         } else
-            throw std::out_of_range("<null>");//TODO
+            throw std::out_of_range("I need more arguments!!1!");//TODO
     }
 }
 
 template<>
 int checkForInt<int>(int arg) {
     return arg;
+}
+
+template<>
+int checkForInt<size_t>(size_t arg) {
+    return (int) arg;
+}
+
+template<>
+int checkForInt<unsigned int>(unsigned int arg) {
+    return (int) arg;
 }
