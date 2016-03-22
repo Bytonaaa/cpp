@@ -1,11 +1,23 @@
 #include <iostream>
+#include <iomanip>
 #include "format.h"
 
 using namespace std;
 
+namespace std {
+    class String : public string {
+    public:
+        ~String() {
+            std::string::~basic_string();
+            cout << "String deleted" << endl;
+        }
+    };
+}
+
 int main() {
-    printf("%0s %#.8d\n", "", 1);
-    std::cout << format("s: %-567894.*u d: %d g: %d, float: %f, char: %c, char string: %s", 222, (unsigned)UINT32_MAX, 3434, 43534, 435345.34, '#', "Suka nah");
-    char *test = (char*)"sdfsdfds";
-    //std::cout << format("%s", nullptr);
+    printf("%.15o, %.a, %p, %+llu\n", -1, 1.12345678901234, (int*)0x123456789ABCDEF, ULLONG_MAX);
+    std::cout << format("d: %.15o, %#.8x, %X, %.g %lu\n", (unsigned)-1, (unsigned)3, UINT_MAX, 13.12345678901234, ULONG_MAX);
+    cout << std::hexfloat;
+    cout.precision(1);
+    cout << std::setprecision(1) << 13.12345678901234 << endl;
 }

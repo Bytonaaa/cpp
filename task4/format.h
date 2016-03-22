@@ -4,10 +4,8 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
-#include <cstdlib>
 
 #define WP_READ (-2)
-
 
 enum FormatSpec {
     def,
