@@ -235,13 +235,13 @@ std::string sprintFloat(Format const *fmt, double d) {
         case G:
             result << std::uppercase;
         case g:
-            result << std::defaultfloat;
+            //result << std::defaultfloat;
             break;
 
         case A:
             result << std::uppercase;
         case a:
-            result << std::hexfloat;
+            //result << std::hexfloat;
             break;
 
         default:
