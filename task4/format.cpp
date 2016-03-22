@@ -142,10 +142,11 @@ private:
                 fmt.spec = X;
                 break;
             case 'f':
+                fmt.spec = f;
             case 'F':
+                fmt.spec = fmt.spec == f ? f : F;
                 if (fmt.precision == -1)
                     fmt.precision = 6;
-                fmt.spec = f;
                 break;
             case 'e':
                 fmt.spec = e;
@@ -192,6 +193,28 @@ void parse(std::vector<Format> &fmt, const char *format) {
         fmt.push_back(Format());
         formatParser(fmt.back());
     }
+}
+
+std::string commonFormatter(Format const *fmt, std::string str) {
+    std::string result;
+
+    if (fmt->minus) {
+        result = str;
+
+        while (fmt->width > result.size())
+            result.push_back(' ');
+
+    } else {
+        if (fmt->width > str.size()) {
+            size_t i = (size_t) fmt->width - str.size();
+            char c = fmt->zero ? '0' : ' ';
+
+            while (i--)
+                result.push_back(c);
+        }
+        result += str;
+    }
+    return result;
 }
 
 std::string sprintFloat(Format const *fmt, double d) {
@@ -258,7 +281,8 @@ std::string sprint<std::string>(Format const *fmt, std::string arg) {
 template<>
 std::string sprint(Format const *fmt, const char *arg) {
     if (arg == NULL)
-        throw std::invalid_argument("Invalid argument: null pointer found");
+        //throw std::invalid_argument("Invalid argument: null pointer found");
+        return std::string("(null)");
 
     if (fmt->spec == s)
         return sprint<std::string>(fmt, arg);
@@ -268,7 +292,7 @@ std::string sprint(Format const *fmt, const char *arg) {
 
 template<>
 std::string sprint(Format const *fmt, char *arg) {
-    return sprint(fmt, (const char*)arg);
+    return sprint(fmt, (const char *) arg);
 }
 
 template<>

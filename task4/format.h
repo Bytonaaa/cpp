@@ -50,18 +50,11 @@ struct Format {
             bool sharp:1;
         };
     };
-    int width = -1;
+    int width = 0;
     int precision = -1;
     FormatSpec length;
     FormatSpec spec;
 };
-
-void parse(std::vector<Format> &fmt, const char *format);
-
-/*template<typename T>
-std::string sprint(Format const *fmt, T arg) {
-    throw std::invalid_argument("Not implemented stuff");
-}*/
 
 template<typename T>
 std::string sprint(Format const *fmt, T arg) {
@@ -91,6 +84,7 @@ int checkForInt(T arg) {
 }
 
 void gen(Format *fmt, unsigned long size, std::string &str);
+std::string commonFormatter(Format const *fmt, std::string str);
 
 template<typename T, typename... Args>
 void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args) {
@@ -104,7 +98,7 @@ void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args)
             } else if (fmt->precision == WP_READ) {
                 fmt->precision = checkForInt(arg);
             } else {
-                str += sprint(fmt, arg);
+                str += commonFormatter(fmt, sprint(fmt, arg));
                 fmt++;
                 size--;
             }
@@ -114,6 +108,7 @@ void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args)
 };
 
 std::string format(std::string const &format);
+void parse(std::vector<Format> &fmt, const char *format);
 
 template<typename... Args>
 std::string format(std::string const &format, Args... args) {
