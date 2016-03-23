@@ -15,6 +15,7 @@ public:
 
             if (*next == '%') {
                 fmt.str = "%";
+                next++;
                 return;
             }
             if (*next == '\0')
@@ -453,7 +454,13 @@ std::string sprint(Format const *fmt, std::nullptr_t arg) {
 }
 
 std::string format(std::string const &format) {
-    return format;
+    std::string str;
+    std::vector<Format> fmt;
+
+    parse(fmt, format.c_str());
+    gen(fmt.data(), fmt.size(), str);
+
+    return str;
 }
 
 void gen(Format *fmt, unsigned long size, std::string &str) {
@@ -462,7 +469,7 @@ void gen(Format *fmt, unsigned long size, std::string &str) {
             str += fmt->str;
             gen(fmt + 1, size - 1, str);
         } else
-            throw std::out_of_range("Нужно больше аргументов!!1!");//TODO
+            throw std::out_of_range("I need more arguments!!1!");//TODO
     }
 }
 
