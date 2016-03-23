@@ -248,7 +248,7 @@ std::string sprintFloat(Format const *fmt, double d) {
         case A:
             result << std::uppercase;
         case a:
-            //result << std::hexfloat;
+            //result << std::hexfloat;  //TODO: Does not work on gcc <unknown version>, but works on clang
             break;
 
         default:
@@ -269,13 +269,14 @@ template<typename T>
 std::string sprintHexOctDec(Format const *fmt, T arg) {
     std::ostringstream result;
 
-    result.width(fmt->width);
     if (fmt->precision != -1)
-        result.precision(fmt->precision);
+        result.precision(fmt->precision);   //TODO: Does not work on u, d, X, x, o, a, A
     if (fmt->sharp)
         result << std::showbase;
-    if (fmt->plus)
+    if (fmt->plus || fmt->space)
         result << std::showpos;
+    if (fmt->space)
+        result << " ";
 
     switch (fmt->spec) {
         case d:

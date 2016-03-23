@@ -111,7 +111,7 @@ void parse(std::vector<Format> &fmt, const char *format);
 
 template<typename... Args>
 std::string format(std::string const &fmtstr, Args... args) {
-    throw std::logic_error(fmtstr);    //show all tests
+    //throw std::logic_error(fmtstr);
     std::string str;
     std::vector<Format> fmt;
 
