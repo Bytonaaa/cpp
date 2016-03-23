@@ -187,7 +187,7 @@ private:
             case '\0':
                 throw std::invalid_argument("Unexpected end of format");
             default:
-                throw std::invalid_argument("Invalid format: wrong format specifier");
+                throw std::invalid_argument(format("Invalid format: wrong format specifier %%%c", *next));
         }
         next++;
     }
