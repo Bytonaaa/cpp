@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
+#define DEFAULT_PRECISION (-1)
 #define WP_READ (-2)
 
 enum FormatSpec {
@@ -82,8 +83,7 @@ int checkForInt(T arg) {
     throw std::invalid_argument("Invalid argument: int or unsigned int expected");
 }
 
-void gen(Format *fmt, unsigned long size, std::string &str);
-std::string commonFormatter(Format const *fmt, std::string str);
+void gen(Format *fmt, unsigned long size, std::string &str);    //zero argument
 
 template<typename T, typename... Args>
 void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args) {
@@ -97,12 +97,14 @@ void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args)
             } else if (fmt->precision == WP_READ) {
                 fmt->precision = checkForInt(arg);
             } else {
-                str += commonFormatter(fmt, sprint(fmt, arg));
+                str += sprint(fmt, arg);
                 fmt++;
                 size--;
             }
             gen(fmt, size, str, args...);
         }
+    } else if (sizeof...(args)) {
+        throw std::invalid_argument("Too many arguments");
     }
 };
 

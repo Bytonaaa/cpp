@@ -266,6 +266,38 @@ std::string sprintChar(Format const *fmt, char c) {
 }
 
 template<typename T>
+std::string sprintDec(Format const *fmt, T arg) {
+    std::string result;
+    std::string number = std::to_string(arg);
+
+    if (fmt->plus) {
+        result = "+" + result;
+    } else if (fmt->space) {
+        result = " " + result;
+    }
+
+    if (fmt->minus)
+        ((Format*)fmt)->zero = false;
+
+    if (fmt->precision != DEFAULT_PRECISION)
+        while (fmt->precision > number.size())
+            number = "0" + number;
+    else if (fmt->zero && fmt->width > result.size())
+            while (fmt->width > (result.size() + number.size()))
+                result += "0";
+
+    result += number;
+
+    while (fmt->width > result.size())
+        if (fmt->minus)
+            result += " ";
+        else
+            result = " " + result;
+
+    return result;
+}
+
+template<typename T>
 std::string sprintHexOctDec(Format const *fmt, T arg) {
     std::ostringstream result;
 
@@ -306,15 +338,15 @@ std::string sprintHexOctDec(Format const *fmt, T arg) {
 template<>
 std::string sprint(Format const *fmt, int arg) {
     if (fmt->spec == d)
-        return sprintHexOctDec(fmt, arg);
+        return sprintDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: int found");
 }
 
 template<>
 std::string sprint(Format const *fmt, unsigned int arg) {
-    if (fmt->spec == u || fmt->spec == x || fmt->spec == X || fmt->spec == o)
-        return sprintHexOctDec(fmt, arg);
+    if (fmt->spec == u)// || fmt->spec == x || fmt->spec == X || fmt->spec == o
+        return sprintDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: unsigned int found");
 }
@@ -388,14 +420,14 @@ std::string sprint(Format const *fmt, unsigned char arg) {
 template<>
 std::string sprint(Format const *fmt, short int arg) {
     if (fmt->spec == d && fmt->length == hh)
-        return sprintHexOctDec(fmt, arg);
+        return sprintDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: short int found");
 }
 
 std::string sprint(Format const *fmt, unsigned short int arg) {
-    if ((fmt->spec == u || fmt->spec == o || fmt->spec == x || fmt->spec == X) && fmt->length == h)
-        return sprintHexOctDec(fmt, arg);
+    if ((fmt->spec == u) && fmt->length == h)// || fmt->spec == o || fmt->spec == x || fmt->spec == X
+        return sprintDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: unsigned short int found");
 }
@@ -404,15 +436,15 @@ std::string sprint(Format const *fmt, unsigned short int arg) {
 template<>
 std::string sprint(Format const *fmt, long int arg) {
     if (fmt->spec == d && fmt->length == l)
-        return sprintHexOctDec(fmt, arg);
+        return sprintDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: long int found");
 }
 
 template<>
 std::string sprint(Format const *fmt, unsigned long int arg) {
-    if ((fmt->spec == u || fmt->spec == o || fmt->spec == x || fmt->spec == X) && fmt->length == l)
-        return sprintHexOctDec(fmt, arg);
+    if ((fmt->spec == u) && fmt->length == l)// || fmt->spec == o || fmt->spec == x || fmt->spec == X
+        return sprintDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: unsigned long int found");
 }
@@ -421,14 +453,14 @@ std::string sprint(Format const *fmt, unsigned long int arg) {
 template<>
 std::string sprint(Format const *fmt, long long int arg) {
     if (fmt->spec == d && fmt->length == ll)
-        return sprintHexOctDec(fmt, arg);
+        return sprintDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: long long int found");
 }
 
 template<>
 std::string sprint(Format const *fmt, unsigned long long int arg) {
-    if ((fmt->spec == u || fmt->spec == o || fmt->spec == x || fmt->spec == X) && fmt->length == ll)
+    if ((fmt->spec == u) && fmt->length == ll)// || fmt->spec == o || fmt->spec == x || fmt->spec == X
         return sprintHexOctDec(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: unsigned long long int found");
@@ -460,23 +492,13 @@ std::string sprint(Format const *fmt, std::nullptr_t arg) {
     throw std::invalid_argument("Invalid argument: nullptr found");
 }
 
-/*std::string format(std::string const &format) {
-    std::string str;
-    std::vector<Format> fmt;
-
-    parse(fmt, format.c_str());
-    gen(fmt.data(), fmt.size(), str);
-
-    return str;
-}*/
-
 void gen(Format *fmt, unsigned long size, std::string &str) {
     if (size) {
         if (fmt->str.size()) {
             str += fmt->str;
             gen(fmt + 1, size - 1, str);
         } else
-            throw std::out_of_range("I need more arguments!!1!");//TODO
+            throw std::out_of_range("Too few arguments");//TODO
     }
 }
 
