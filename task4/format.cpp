@@ -70,6 +70,9 @@ private:
                 case '#':
                     fmt.sharp = true;
                     break;
+                case ' ':
+                    fmt.space = true;
+                    break;
 
                 case '\0':
                     throw std::invalid_argument("Invalid format: wrong flags");

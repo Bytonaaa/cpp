@@ -46,6 +46,7 @@ struct Format {
             bool plus:1;
             bool minus:1;
             bool sharp:1;
+            bool space:1;
         };
     };
     int width = 0;
@@ -110,6 +111,7 @@ void parse(std::vector<Format> &fmt, const char *format);
 
 template<typename... Args>
 std::string format(std::string const &fmtstr, Args... args) {
+    throw std::invalid_argument(fmtstr);    //show all tests
     std::string str;
     std::vector<Format> fmt;
 
