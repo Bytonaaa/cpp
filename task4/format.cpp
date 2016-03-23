@@ -71,7 +71,7 @@ private:
                     break;
 
                 case '\0':
-                    throw std::invalid_argument("Invalid format");
+                    throw std::invalid_argument("Invalid format: wrong flags");
 
                 default:
                     ok = false;
@@ -187,7 +187,7 @@ private:
             case '\0':
                 throw std::invalid_argument("Unexpected end of format");
             default:
-                throw std::invalid_argument("Invalid format");
+                throw std::invalid_argument("Invalid format: wrong format specifier");
         }
         next++;
     }
@@ -219,6 +219,8 @@ std::string sprintFloat(Format const *fmt, double d) {
         result.precision(fmt->precision);
     if (fmt->sharp)
         result << std::showpoint;
+    if (fmt->plus)
+        result << std::showpos;
 
     switch (fmt->spec) {
         case F:
