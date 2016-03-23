@@ -105,15 +105,16 @@ void gen(Format *fmt, unsigned long size, std::string &str, T arg, Args... args)
     }
 };
 
-std::string format(std::string const &format);
+//std::string format(std::string const &format);
 void parse(std::vector<Format> &fmt, const char *format);
 
 template<typename... Args>
-std::string format(std::string const &format, Args... args) {
+std::string format(std::string const &fmtstr, Args... args) {
     std::string str;
     std::vector<Format> fmt;
 
-    parse(fmt, format.c_str());
+    parse(fmt, fmtstr.c_str());
+
     gen(fmt.data(), fmt.size(), str, args...);
 
     return str;

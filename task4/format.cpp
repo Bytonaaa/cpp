@@ -5,9 +5,10 @@
 
 class FormatParser {
 public:
+    const char *fmtptr;
     const char *next;
 
-    FormatParser(const char *format) : next(format) { };
+    FormatParser(const char *format) : next(format), fmtptr(format) { };
 
     void operator()(Format &fmt) {
         if (*next == '%') {
@@ -187,7 +188,7 @@ private:
             case '\0':
                 throw std::invalid_argument("Unexpected end of format");
             default:
-                throw std::invalid_argument(format("Invalid format: wrong format specifier %%%c", *next));
+                throw std::invalid_argument(format("Invalid format: wrong format specifier %%%c in format \"%s\"", *next, fmtptr));
         }
         next++;
     }
@@ -455,7 +456,7 @@ std::string sprint(Format const *fmt, std::nullptr_t arg) {
     throw std::invalid_argument("Invalid argument: nullptr found");
 }
 
-std::string format(std::string const &format) {
+/*std::string format(std::string const &format) {
     std::string str;
     std::vector<Format> fmt;
 
@@ -463,7 +464,7 @@ std::string format(std::string const &format) {
     gen(fmt.data(), fmt.size(), str);
 
     return str;
-}
+}*/
 
 void gen(Format *fmt, unsigned long size, std::string &str) {
     if (size) {
