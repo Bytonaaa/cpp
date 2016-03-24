@@ -210,8 +210,75 @@ void parse(std::vector<Format> &fmt, const char *format) {
     }
 }
 
-std::string sprintHexFloat(Format const *fmt, double d) {
+std::string sprintChar(Format const *fmt, char c) {
+    std::string internal;
+    std::string result;
+    result.push_back(c);
 
+    if (fmt != nullptr) {
+        while (fmt->width > (internal.size() + 1))
+            internal.push_back(fmt->zero ? '0' : ' ');
+
+        if (fmt->minus)
+            result = result + internal;
+        else
+            result = internal + result;
+    }
+
+    return result;
+}
+
+std::string sprintHexFloat(Format const *fmt, double d) {
+    const char upperCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    const char lowerCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    const char *alpha = fmt->spec == A ? upperCase : lowerCase;
+
+    //UNDEFINED BEHAVIOR ON DENORMAL FLOATS
+    std::string result = fmt->spec == A ? "0X" : "0x";
+    std::string hex;
+    union {
+        double f;
+        struct {
+            unsigned long long m:52;
+            unsigned p:11;
+            unsigned s:1;
+        };
+    } Float;
+
+    Float.f = d;
+
+    const char *sign;
+    if (fmt->plus && d > 0) {
+        sign = "+";
+    } else if (fmt->space && d > 0) {
+        sign = " ";
+    } else if (d < 0) {
+        sign = "-";
+    } else {
+        sign = "";
+    }
+    result = sign + result;
+
+    if (Float.m == 0 && Float.p == 0) {
+        return result + "0p+0";
+    }
+
+    while (Float.m) {
+        hex = sprintChar(nullptr, alpha[Float.m & 0xF]) + hex;
+        Float.m >>= 4;
+    }
+
+    int p = Float.p - 1023;
+
+    if (hex.size()) {
+        result += "1." + hex + "p" + format("%+d", p);
+    } else if (fmt->sharp) {
+        result += "1.p" + format("%+d", p);
+    } else {
+        result += "1p" + format("%+d", p);
+    }
+
+    return result;
 }
 
 std::string sprintFloat(Format const *fmt, double d) {
@@ -285,10 +352,16 @@ std::string sprintFloat(Format const *fmt, double d) {
     return result;
 }
 
-std::string sprintChar(Format const *fmt, char c) {
-    std::string s;
-    s.push_back(c);
-    return s;
+std::string sprintStr(Format const *fmt, std::string str) {
+    std::string internal;
+
+    while (fmt->width > (internal.size() + 1))
+        internal.push_back(fmt->zero ? '0' : ' ');
+
+    if (fmt->minus)
+        return str + internal;
+    else
+        return internal + str;
 }
 
 template<typename T>
@@ -495,7 +568,7 @@ std::string sprint(Format const *fmt, float arg) {
 template<>
 std::string sprint<std::string>(Format const *fmt, std::string arg) {
     if (fmt->spec == s)
-        return arg;
+        return sprintStr(fmt, arg);
 
     throw std::invalid_argument("Invalid argument: std::string found");
 }
@@ -504,10 +577,10 @@ template<>
 std::string sprint(Format const *fmt, const char *arg) {
     if (arg == NULL)
         //throw std::invalid_argument("Invalid argument: null pointer found");
-        return std::string("(null)");
+        return "(nil)";
 
     if (fmt->spec == s)
-        return sprint<std::string>(fmt, arg);
+        return sprintStr(fmt, arg);
 
     throw std::invalid_argument("Invalid argument: char* found");
 }
@@ -635,7 +708,7 @@ std::string sprint(Format const *fmt, void *arg) {
 template<>
 std::string sprint(Format const *fmt, std::nullptr_t arg) {
     if (fmt->spec == p)
-        return "(null)";
+        return "(nil)";
 
     throw std::invalid_argument("Invalid argument: nullptr found");
 }
