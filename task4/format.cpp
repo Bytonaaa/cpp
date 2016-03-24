@@ -270,6 +270,10 @@ std::string sprintHexFloat(Format const *fmt, double d) {
         Float.m >>= 4;
     }
 
+    while (fmt->precision > hex.size() && fmt->precision != DEFAULT_PRECISION) {
+        hex += "0";
+    }
+
     int p = Float.p - 1023;
 
     if (hex.size()) {
