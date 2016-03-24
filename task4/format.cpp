@@ -297,7 +297,7 @@ std::string sprintDec(Format const *fmt, T arg) {
         arg /= 10;
     }
 
-    auto signLength = strlen(signStr);
+    size_t signLength = *signStr == '\0' ? 0 : 1;//auto signLength = strlen(signStr); gcc throws here a warning
     if (fmt->precision != DEFAULT_PRECISION) {
         while (fmt->precision > (result.size() + signLength))
             result = "0" + result;
