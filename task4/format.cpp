@@ -273,7 +273,7 @@ std::string sprintHexFloat(Format const *fmt, double d) {
     int p = Float.p - 1023;
 
     if (hex.size()) {
-        result += "1." + hex + "p" + format("%+d", p);
+        result += "1." + hex + sprintChar(nullptr, alpha[16]) + format("%+d", p);
     } else if (fmt->sharp) {
         result += "1." + sprintChar(nullptr, alpha[16]) + format("%+d", p);
     } else {
