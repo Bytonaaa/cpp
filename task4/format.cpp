@@ -280,7 +280,7 @@ std::string sprintDec(Format const *fmt, T arg) {
 
     if (arg < 0) {
         signStr = "-";
-    } else if (fmt->plus || fmt->space) {
+    } else if ((fmt->plus || fmt->space) && fmt->spec == d) {
         signStr = (fmt->plus ? "+" : " ");
     } else {
         signStr = "";

@@ -15,7 +15,7 @@ using namespace std;
 }*/
 
 int main() {
-    printf("%+025d\n", -2345556);
+    printf("%+x\n", 5);
     std::cout << format("%+025d, %u\n", -2345556, (unsigned)5);
     /*printf("%.15o, %.a, %p, %+llu\n", -1, 1.12345678901234, (int*)0x123456789ABCDEF, ULLONG_MAX);
     std::cout << format("d: %.15o, %#.8x, %X, %.g %lu\n", (unsigned)-1, (unsigned)3, UINT_MAX, 13.12345678901234, ULONG_MAX);
