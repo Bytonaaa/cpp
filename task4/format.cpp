@@ -59,19 +59,23 @@ private:
         while (ok) {
             switch (*next) {
                 case '0':
-                    fmt.zero = true;
+                    if (!fmt.minus)
+                        fmt.zero = true;
                     break;
                 case '+':
                     fmt.plus = true;
+                    fmt.space = false;
                     break;
                 case '-':
                     fmt.minus = true;
+                    fmt.zero = false;
                     break;
                 case '#':
                     fmt.sharp = true;
                     break;
                 case ' ':
-                    fmt.space = true;
+                    if (!fmt.plus)
+                        fmt.space = true;
                     break;
 
                 case '\0':
@@ -191,7 +195,8 @@ private:
             case '\0':
                 throw std::invalid_argument("Unexpected end of format");
             default:
-                throw std::invalid_argument(format("Invalid format: wrong format specifier %%%c in format \"%s\"", *next, fmtptr));
+                throw std::invalid_argument(
+                        format("Invalid format: wrong format specifier %%%c in format \"%s\"", *next, fmtptr));
         }
         next++;
     }
@@ -205,7 +210,7 @@ void parse(std::vector<Format> &fmt, const char *format) {
     }
 }
 
-std::string commonFormatter(Format const *fmt, std::string str) {
+/*std::string commonFormatter(Format const *fmt, std::string str) {
     std::ostringstream result;
 
     result.setf(fmt->minus ? std::ios::left : std::ios::right);
@@ -215,7 +220,7 @@ std::string commonFormatter(Format const *fmt, std::string str) {
     result << str;
 
     return result.str();
-}
+}*/
 
 std::string sprintFloat(Format const *fmt, double d) {
     std::ostringstream result;
@@ -268,31 +273,47 @@ std::string sprintChar(Format const *fmt, char c) {
 template<typename T>
 std::string sprintDec(Format const *fmt, T arg) {
     std::string result;
-    std::string number = std::to_string(arg);
+    std::string internal;
+    const char *signStr;
 
-    if (fmt->plus) {
-        result = "+" + result;
-    } else if (fmt->space) {
-        result = " " + result;
+    bool zero = fmt->precision == DEFAULT_PRECISION && fmt->zero;
+
+    if (arg < 0) {
+        signStr = "-";
+    } else if (fmt->plus || fmt->space) {
+        signStr = (fmt->plus ? "+" : " ");
+    } else {
+        signStr = "";
+    }
+
+    while (arg) {
+        char symbol = (arg % 10);   //abs(arg % 10) throws warnings on unsigned types
+        if (symbol < 0)
+            symbol = -symbol + '0';
+        else
+            symbol += '0';
+
+        result = sprintChar(nullptr, symbol) + result;
+        arg /= 10;
+    }
+
+    auto signLength = strlen(signStr);
+    if (fmt->precision != DEFAULT_PRECISION) {
+        while (fmt->precision > (result.size() + signLength))
+            result = "0" + result;
+    }
+
+    while (fmt->width > (result.size() + internal.size() + signLength)) {
+        const char c = (zero ? '0' : ' ');
+        internal.push_back(c);
     }
 
     if (fmt->minus)
-        ((Format*)fmt)->zero = false;
-
-    if (fmt->precision != DEFAULT_PRECISION)
-        while (fmt->precision > number.size())
-            number = "0" + number;
-    else if (fmt->zero && fmt->width > result.size())
-            while (fmt->width > (result.size() + number.size()))
-                result += "0";
-
-    result += number;
-
-    while (fmt->width > result.size())
-        if (fmt->minus)
-            result += " ";
-        else
-            result = " " + result;
+        result = signStr + result + internal;
+    else if (zero)
+        result = signStr + internal + result;
+    else
+        result = internal + signStr + result;
 
     return result;
 }
@@ -468,7 +489,7 @@ std::string sprint(Format const *fmt, unsigned long long int arg) {
 
 
 template<>
-std::string sprint(Format const *fmt, int *arg) {
+std::string sprint(Format const *fmt, signed int *arg) {
     if (fmt->spec == n) {
         *arg = 0;   //TODO: %n
         return "";

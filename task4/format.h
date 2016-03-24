@@ -41,7 +41,7 @@ enum FormatSpec {
 struct Format {
     std::string str;
     union {
-        int flags;
+        int flags = 0;
         struct {
             bool zero:1;
             bool plus:1;
@@ -51,7 +51,7 @@ struct Format {
         };
     };
     int width = 0;
-    int precision = -1;
+    int precision = DEFAULT_PRECISION;
     FormatSpec length;
     FormatSpec spec;
 };
