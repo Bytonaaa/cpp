@@ -271,12 +271,86 @@ std::string sprintChar(Format const *fmt, char c) {
 }
 
 template<typename T>
+std::string sprintHex(Format const *fmt, T arg) {
+    const char upperCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    const char lowerCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    const char *alpha = fmt->spec == X ? upperCase : lowerCase;
+
+    typename std::make_unsigned<T>::type uarg = (typename std::make_unsigned<T>::type) arg;
+    std::string result;
+    std::string internal;
+
+    const bool zero = fmt->precision == DEFAULT_PRECISION && fmt->zero;
+
+    while (uarg) {   //TODO: O(n^2) is very bad
+        const unsigned char digit = (unsigned char) (uarg & 0xF);
+        result = sprintChar(nullptr, alpha[digit]) + result;
+        uarg >>= 4;
+    }
+
+    if (fmt->precision != DEFAULT_PRECISION) {
+        while (fmt->precision > (result.size()))   //TODO: O(n^2)!!!
+            result = "0" + result;
+    }
+
+    if (fmt->sharp)
+        result = fmt->spec == X ? "0X" : "0x" + result;
+
+    while (fmt->width > (result.size() + internal.size())) {
+        const char c = (zero ? '0' : ' ');
+        internal.push_back(c);
+    }
+
+    if (fmt->minus)
+        result = result + internal;
+    else
+        result = internal + result;
+
+    return result;
+}
+
+template<typename T>
+std::string sprintOct(Format const *fmt, T arg) {
+    typename std::make_unsigned<T>::type uarg = (typename std::make_unsigned<T>::type) arg;
+    std::string result;
+    std::string internal;
+
+    const bool zero = fmt->precision == DEFAULT_PRECISION && fmt->zero;
+
+    while (uarg) {   //TODO: O(n^2) is very bad
+        const unsigned char digit = (unsigned char) (uarg & 0x7);
+        result = sprintChar(nullptr, digit + (char) 0x30) + result;
+        uarg >>= 3;
+    }
+
+    if (fmt->precision != DEFAULT_PRECISION) {
+        while (fmt->precision > (result.size() + (fmt->sharp ? 1 : 0)))   //TODO: O(n^2)!!!
+            result = "0" + result;
+    }
+
+    if (fmt->sharp)
+        result = "0" + result;
+
+    while (fmt->width > (result.size() + internal.size())) {
+        const char c = (zero ? '0' : ' ');
+        internal.push_back(c);
+    }
+
+    if (fmt->minus)
+        result = result + internal;
+    else
+        result = internal + result;
+
+    return result;
+}
+
+template<typename T>
 std::string sprintDec(Format const *fmt, T arg) {
     std::string result;
     std::string internal;
     const char *signStr;
 
-    bool zero = fmt->precision == DEFAULT_PRECISION && fmt->zero;
+    const bool zero = fmt->precision == DEFAULT_PRECISION && fmt->zero;
 
     if (arg < 0) {
         signStr = "-";
@@ -286,7 +360,7 @@ std::string sprintDec(Format const *fmt, T arg) {
         signStr = "";
     }
 
-    while (arg) {
+    while (arg) {   //TODO: O(n^2) is very bad
         char symbol = (arg % 10);   //abs(arg % 10) throws warnings on unsigned types
         if (symbol < 0)
             symbol = -symbol + '0';
@@ -297,9 +371,10 @@ std::string sprintDec(Format const *fmt, T arg) {
         arg /= 10;
     }
 
-    size_t signLength = *signStr == '\0' ? 0 : 1;//auto signLength = strlen(signStr); gcc throws here a warning
+    size_t signLength = *signStr == '\0' ? 0
+                                         : 1;//auto signLength = strlen(signStr); gcc throws here a warning for absolutely fucking no reason
     if (fmt->precision != DEFAULT_PRECISION) {
-        while (fmt->precision > (result.size() + signLength))
+        while (fmt->precision > (result.size() + signLength))   //TODO: O(n^2)!!!
             result = "0" + result;
     }
 
@@ -368,6 +443,10 @@ template<>
 std::string sprint(Format const *fmt, unsigned int arg) {
     if (fmt->spec == u)// || fmt->spec == x || fmt->spec == X || fmt->spec == o
         return sprintDec(fmt, arg);
+    else if (fmt->spec == o)
+        return sprintOct(fmt, arg);
+    else if (fmt->spec == X || fmt->spec == x)
+        return sprintHex(fmt, arg);
     else
         throw std::invalid_argument("Invalid argument: unsigned int found");
 }
