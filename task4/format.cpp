@@ -264,7 +264,9 @@ std::string sprintHexFloat(Format const *fmt, double d) {
     }
 
     while (Float.m) {
-        hex = sprintChar(nullptr, alpha[Float.m & 0xF]) + hex;
+        char c = alpha[Float.m & 0xF];
+        if (c != '0' || hex.size())
+            hex = sprintChar(nullptr, c) + hex;
         Float.m >>= 4;
     }
 
@@ -699,6 +701,8 @@ std::string sprint(Format const *fmt, signed int *arg) {
     if (fmt->spec == n) {
         *arg = 0;   //TODO: %n
         return "";
+    } else if (fmt->spec == p) {
+        return sprintHexOctDec(fmt, arg);
     }
 
     throw std::invalid_argument("Invalid argument: int* found");
@@ -710,7 +714,23 @@ std::string sprint(Format const *fmt, void *arg) {
     if (fmt->spec == p)
         return sprintHexOctDec(fmt, arg);
 
-    throw std::invalid_argument("Invalid argument: int* found");
+    throw std::invalid_argument("Invalid argument: void* found");
+}
+
+template<>
+std::string sprint(Format const *fmt, double *arg) {
+    if (fmt->spec == p)
+        return sprintHexOctDec(fmt, arg);
+
+    throw std::invalid_argument("Invalid argument: double* found");
+}
+
+template<>
+std::string sprint(Format const *fmt, float *arg) {
+    if (fmt->spec == p)
+        return sprintHexOctDec(fmt, arg);
+
+    throw std::invalid_argument("Invalid argument: float* found");
 }
 
 
