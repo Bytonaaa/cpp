@@ -229,8 +229,8 @@ std::string sprintChar(Format const *fmt, char c) {
 }
 
 std::string sprintHexFloat(Format const *fmt, double d) {
-    const char upperCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-    const char lowerCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    const char upperCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'P'};
+    const char lowerCase[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'p'};
     const char *alpha = fmt->spec == A ? upperCase : lowerCase;
 
     //UNDEFINED BEHAVIOR ON DENORMAL FLOATS
@@ -273,9 +273,9 @@ std::string sprintHexFloat(Format const *fmt, double d) {
     if (hex.size()) {
         result += "1." + hex + "p" + format("%+d", p);
     } else if (fmt->sharp) {
-        result += "1.p" + format("%+d", p);
+        result += "1." + sprintChar(nullptr, alpha[16]) + format("%+d", p);
     } else {
-        result += "1p" + format("%+d", p);
+        result += "1" + sprintChar(nullptr, alpha[16]) + format("%+d", p);
     }
 
     return result;
@@ -355,8 +355,8 @@ std::string sprintFloat(Format const *fmt, double d) {
 std::string sprintStr(Format const *fmt, std::string str) {
     std::string internal;
 
-    while (fmt->width > (internal.size() + 1))
-        internal.push_back(fmt->zero ? '0' : ' ');
+    while (fmt->width > (str.size() + internal.size()))
+        internal.push_back(' ');//fmt->zero ? '0' : ' '
 
     if (fmt->minus)
         return str + internal;
@@ -381,6 +381,9 @@ std::string sprintHex(Format const *fmt, T arg) {
         result = sprintChar(nullptr, alpha[digit]) + result;
         uarg >>= 4;
     }
+
+    if (result.size() == 0)
+        result = "0";
 
     if (fmt->precision != DEFAULT_PRECISION) {
         while (fmt->precision > (result.size()))   //TODO: O(n^2)!!!
@@ -416,6 +419,9 @@ std::string sprintOct(Format const *fmt, T arg) {
         result = sprintChar(nullptr, digit + (char) 0x30) + result;
         uarg >>= 3;
     }
+
+    if (result.size() == 0)
+        result = "0";
 
     if (fmt->precision != DEFAULT_PRECISION) {
         while (fmt->precision > (result.size() + (fmt->sharp ? 1 : 0)))   //TODO: O(n^2)!!!
@@ -464,6 +470,9 @@ std::string sprintDec(Format const *fmt, T arg) {
         result = sprintChar(nullptr, symbol) + result;
         arg /= 10;
     }
+
+    if (result.size() == 0)
+        result = "0";
 
     size_t signLength = *signStr == '\0' ? 0
                                          : 1;//auto signLength = strlen(signStr); gcc throws here a warning for absolutely fucking no reason
