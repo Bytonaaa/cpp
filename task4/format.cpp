@@ -294,7 +294,7 @@ std::string sprintHex(Format const *fmt, T arg) {
     }
 
     if (fmt->sharp)
-        result = fmt->spec == X ? "0X" : "0x" + result;
+        result = (fmt->spec == X ? "0X" : "0x") + result;
 
     while (fmt->width > (result.size() + internal.size())) {
         const char c = (zero ? '0' : ' ');
