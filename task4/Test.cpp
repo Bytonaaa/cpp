@@ -1,6 +1,4 @@
 #include <iostream>
-#include <math.h>
-//#include <iomanip>
 #include "format.h"
 
 using namespace std;
