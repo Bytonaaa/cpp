@@ -113,8 +113,6 @@ namespace formatImpl {
     };
 
     void parseFormatString(std::vector<Format> &fmt, const char *format);
-
-#endif //TASK4_FORMAT_H
 }
 
 /*
@@ -140,3 +138,4 @@ std::string format(std::string const &formatString, Args... args) {
 
     return str;
 }
+#endif //TASK4_FORMAT_H
