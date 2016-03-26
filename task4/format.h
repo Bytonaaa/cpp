@@ -115,17 +115,35 @@ namespace formatImpl {
     void parseFormatString(std::vector<Format> &fmt, const char *format);
 }
 
-/*
- * Generates the string with given the format string
- * It works like sprintf()
- * Format specifiers match the format specifiers in sprintf()
- * Full (or not) a format string specification is given on http://cplusplus.com/printf
- *
- * Throws exceptions if:
- *      1) the argument does not match its format specifier
- *      2) too few arguments were given
- *      3) too many arguments were given (it helps to find some mistakes in format string)
- */
+    /**
+     * Returns a formatted string using the specified format string and
+     * arguments.
+     *
+     * @param  format
+     *         A <a href="http://cplusplus.com/printf">format string</a>
+     *
+     * @param  args
+     *         Arguments referenced by the format specifiers in the format
+     *         string.  If there are more arguments than format specifiers, the
+     *         extra arguments are ignored.  The number of arguments is
+     *         variable and may be zero.  The maximum number of arguments is
+     *         limited by the maximum dimension of a Java array as defined by
+     *         <cite>The Java&trade; Virtual Machine Specification</cite>.
+     *         The behaviour on a
+     *         {@code null} argument depends on the <a
+     *         href="../util/Formatter.html#syntax">conversion</a>.
+     *
+     * @throws  std::invalid_format
+     *          If a format string contains an illegal syntax, a format
+     *          specifier that is incompatible with the given arguments,
+     *          insufficient arguments given the format string, or other
+     *          illegal conditions.
+     *
+     * @throws  std::out_of_range
+     *          If the arguments' list contains too few arguments
+     *
+     * @return  A formatted string
+     */
 
 template<typename... Args>
 std::string format(std::string const &formatString, Args... args) {

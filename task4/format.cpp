@@ -103,7 +103,7 @@ namespace formatImpl {
             while (isdigit(*next)) {
                 num *= 10;
                 if (num < 0)
-                    throw std::overflow_error("Invalid format: overflow while parsing number");
+                    throw std::invalid_argument("Invalid format: overflow while parsing number");
 
                 num += *next - '0';
                 next++;
