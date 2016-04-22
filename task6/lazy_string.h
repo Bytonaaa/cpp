@@ -1,0 +1,48 @@
+#ifndef TASK6_LAZY_STRING_H
+#define TASK6_LAZY_STRING_H
+
+#include <string>
+#include <istream>
+#include <ostream>
+
+class lazy_string {
+public:
+    struct custom_char {
+        operator char();
+        custom_char &operator=(char);
+        custom_char(char, lazy_string *, size_t);
+
+    private:
+        char c;
+        size_t index;
+        lazy_string *ls;
+    };
+
+    operator std::string();
+    lazy_string();
+    lazy_string(const std::string &str);
+    ~lazy_string();
+    size_t size() const;
+    size_t length() const;
+    lazy_string substr(size_t pos = 0, size_t len = std::string::npos);
+    custom_char at(size_t);
+    custom_char operator[](size_t);
+    lazy_string &operator=(const lazy_string &str);
+
+    friend std::istream &operator>>(std::istream &is, lazy_string &ls);
+    friend std::ostream &operator<<(std::ostream &os, lazy_string &ls);
+
+private:
+    size_t start, sz;
+    struct l_str {
+        std::string str;
+        size_t count;
+
+        l_str(const std::string &str);
+        l_str();
+        ~l_str();
+    } *ref;
+    lazy_string(size_t start, size_t sz, l_str *ref);
+};
+
+#endif //TASK6_LAZY_STRING_H
