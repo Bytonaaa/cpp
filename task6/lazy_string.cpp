@@ -88,7 +88,6 @@ lazy_string::l_str::~l_str() {
     if (count > 1)
         count--;
     else if (count == 1) {  /* in this case destructor will be called twice */
-        str.~string();
         count = 0;
         delete this;
     }
