@@ -8,11 +8,14 @@
 class lazy_string {
 public:
     struct custom_char {
+        friend class lazy_string;
+        
         operator char();
         custom_char &operator=(char);
-        custom_char(char, lazy_string *, size_t);
 
     private:
+        custom_char(char, lazy_string *, size_t);
+        
         char c;
         size_t index;
         lazy_string *ls;
