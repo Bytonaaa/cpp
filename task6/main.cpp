@@ -7,11 +7,16 @@ class test1 {
 public:
     int a;
     test1(int a) : a(a) {
-        cout << "test1: constructed" << endl;
+        cout << "test1: constructed " << a << endl;
     };
 
     ~test1() {
-        cout << "test1: destructed" << endl;
+        cout << "test1: destructed " << a << endl;
+    }
+
+    test1 &operator=(const test1 &that) {
+        this->a = that.a;
+        return *this;
     }
 
     void *operator new(size_t sz) {
@@ -46,6 +51,8 @@ int main() {
     cout << s << " " << ss << endl;
     s.at(2) = 's';
     cout << s << " " << ss << endl;*/
-    auto t = new test1(10);
-    delete t;
+    auto s = lazy_string("getget");
+    auto ss = lazy_string("get");
+    s = ss;
+    cout << "......" << endl;
 }

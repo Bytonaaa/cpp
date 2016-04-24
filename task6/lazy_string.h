@@ -14,9 +14,8 @@ public:
         custom_char &operator=(char);
 
     private:
-        custom_char(char, lazy_string *, size_t);
-        
-        char c;
+        custom_char(lazy_string *, size_t);
+
         size_t index;
         lazy_string *ls;
     };
