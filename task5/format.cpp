@@ -256,9 +256,9 @@ namespace formatImpl {
         union {
             double f;
             struct {
-                unsigned long long m:52;
-                unsigned p:11;
-                unsigned s:1;
+                uint64_t m:52;
+                uint_fast32_t p:11;
+                uint_fast32_t s:1;
             };
         } Float;
 
