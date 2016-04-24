@@ -43,7 +43,9 @@ private:
 
         l_str(const std::string &str);
         l_str();
-        ~l_str();
+
+        void operator++(int);
+        void operator--(int);
     } *ref;
     lazy_string(size_t start, size_t sz, l_str *ref);
 };
