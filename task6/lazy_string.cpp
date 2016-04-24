@@ -25,7 +25,7 @@ size_t lazy_string::length() const {
 
 
 lazy_string::~lazy_string() {
-    ref--;
+    ref[0]--;
 }
 
 lazy_string lazy_string::substr(size_t pos, size_t len) {
