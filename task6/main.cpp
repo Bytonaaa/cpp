@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include "lazy_string.h"
 
 using namespace std;
@@ -36,12 +37,34 @@ public:
     }
 };
 
+void *operator new(size_t sz) {
+    void *p = malloc(sz);
+    cout << "alloc " << p << " " << sz << endl;
+    return p;
+}
+
+void operator delete(void *p) {
+    cout << "dealloc " << p << endl;
+    free(p);
+}
+
 template<typename T>
 class pointer {
 
 };
 
+void inspect(char *p, size_t sz) {
+    cout << p << endl;
+    for (int i = 0; i < sz; i++) {
+        if (i % 16 == 0)
+            cout << endl;
+        printf("%.2X ", p[i]);
+    }
+}
+
 int main() {
+    //std::shared_ptr<std::string> sss = std::make_shared<std::string>("test-stirng");
+    //cout << *sss << " " << sss << endl;
     /*string str;
     lazy_string s("lazy_test"), ss;
     ss = s;
@@ -51,8 +74,11 @@ int main() {
     cout << s << " " << ss << endl;
     s.at(2) = 's';
     cout << s << " " << ss << endl;*/
-    auto s = lazy_string("getget");
-    auto ss = lazy_string("get");
-    s = ss;
     cout << "......" << endl;
+    auto s = lazy_string("getget");
+    auto ss = s.substr(2, 3);
+    string sss = "string";
+    cout << s << endl << ss << endl << sss;
+    s[2] = 'd';
+    cout << s << endl << ss << endl;
 }

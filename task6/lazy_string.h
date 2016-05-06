@@ -4,31 +4,31 @@
 #include <string>
 #include <istream>
 #include <ostream>
+#include <memory>
 
 class lazy_string {
 public:
-    struct custom_char {
+    struct ls_char {
         friend class lazy_string;
         
-        operator char();
-        custom_char &operator=(char);
+        operator char() const;
+        ls_char &operator=(char);
 
     private:
-        custom_char(lazy_string *, size_t);
+        ls_char(lazy_string *, size_t);
 
-        size_t index;
-        lazy_string *ls;
+        const size_t index;
+        lazy_string *const ls;
     };
 
     operator std::string();
     lazy_string();
     lazy_string(const std::string &str);
-    ~lazy_string();
     size_t size() const;
     size_t length() const;
-    lazy_string substr(size_t pos = 0, size_t len = std::string::npos);
-    custom_char at(size_t);
-    custom_char operator[](size_t);
+    lazy_string substr(size_t pos = 0, size_t len = std::string::npos) const;
+    ls_char at(size_t);
+    ls_char operator[](size_t);
     lazy_string &operator=(const lazy_string &str);
 
     friend std::istream &operator>>(std::istream &is, lazy_string &ls);
@@ -36,17 +36,8 @@ public:
 
 private:
     size_t start, sz;
-    struct l_str {
-        std::string str;
-        size_t count;
-
-        l_str(const std::string &str);
-        l_str();
-
-        void operator++(int);
-        void operator--(int);
-    } *ref;
-    lazy_string(size_t start, size_t sz, l_str *ref);
+    std::shared_ptr<std::string> ref;
+    lazy_string(size_t start, size_t sz, std::shared_ptr<std::string> ref);
 };
 
 #endif //TASK6_LAZY_STRING_H
