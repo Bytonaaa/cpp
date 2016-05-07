@@ -6,6 +6,7 @@
 #include <vector>
 #include <typeinfo>
 #include <iostream>
+#include <cxxabi.h>
 
 #define DEFAULT_PRECISION (-1)  //default value
 #define WP_READ (-2)    // useful if we want to read a width or a precision value from the arguments list
@@ -87,8 +88,9 @@ namespace formatImpl {
             str = "ptr<";
         }
 
-        str += typeid(T).name();
-        str += ">";
+        int status = -1;
+        str += abi::__cxa_demangle(typeid(T).name(), NULL, NULL, &status);
+        str[str.size() - 1] = '>';
 
         if (arg != nullptr) {
             str += "(" + sprintPointer(fmt, (void *) arg) + ")";
@@ -125,11 +127,15 @@ namespace formatImpl {
         throw std::invalid_argument("Invalid format: integral type expected");
     }
 
+    template <typename T, size_t sz>
+    int checkForInt(T[sz], ...) {
+        throw std::invalid_argument("Invalid format: integral type expected");
+    };
 
     void formatImplementation(Format *fmt, unsigned long size, std::string &str);   //base
 
     template<typename T, typename... Args>
-    void formatImplementation(Format *format, unsigned long tokensLeft, std::string &str, T curArgument, Args... args) {
+    void formatImplementation(Format *format, unsigned long tokensLeft, std::string &str, const T &curArgument, const Args&... args) {
         if (tokensLeft) {
             if (format->str.size()) {
                 str += format->str;
@@ -140,7 +146,7 @@ namespace formatImpl {
                 } else if (format->precision == WP_READ) {
                     format->precision = checkForInt<T>(curArgument);
                 } else {
-                    str += sprint<T>(format, curArgument);
+                    str += sprint<typename std::remove_reference<T>::type>(format, curArgument);
                     format++;
                     tokensLeft--;
                 }
@@ -180,7 +186,7 @@ namespace formatImpl {
  */
 
 template<typename... Args>
-std::string format(std::string const &formatString, Args... args) {
+std::string format(std::string const &formatString, const Args&... args) {
     std::string str;
     std::vector<formatImpl::Format> fmt;
 

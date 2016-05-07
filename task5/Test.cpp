@@ -21,7 +21,7 @@ void foo(T arg) {
 
 int main() {
     int b[8], *a, si;
-    std::cout << typeid(b).name() << " " << typeid(a).name() << " " << typeid(si).name() << endl;
+    //std::cout << typeid(b).name() << " " << typeid(a).name() << " " << typeid(si).name() << endl;
     std::cout << format("%@ %@ %*d\n", 0.0, (void*)34, 45, 4);
     printf("%+a, %a, %p\n", 0., 2e-320, (void*)34);
     std::cout << format("%a\n", 2e-323);
