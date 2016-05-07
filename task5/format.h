@@ -4,6 +4,7 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+#include <typeinfo>
 
 #define DEFAULT_PRECISION (-1)  //default value
 #define WP_READ (-2)    // useful if we want to read a width or a precision value from the arguments list
