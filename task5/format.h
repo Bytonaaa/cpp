@@ -116,7 +116,8 @@ namespace formatImpl {
 
     template <typename T>
     std::string sprintAuto(Format const *fmt, typename is_convertible_to_string<T>::type const &arg) {
-        return std::to_string(arg);
+        typename std::remove_const<T>::type arg2 = arg;
+        return std::to_string(arg2);
     }
 
     template <typename T>
