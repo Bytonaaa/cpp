@@ -71,7 +71,8 @@ namespace formatImpl {
     const char *demangle(const char *mangledName);
 
     template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_pointer<T>::value, T>::type arg) {
+    std::string sprintAuto(Format const *fmt,
+                           typename std::enable_if<std::is_pointer<T>::value || std::is_same<std::nullptr_t, T>::value, T>::type arg) {
         std::string str;
         if (arg == nullptr)
             str = "nullptr<";
@@ -79,7 +80,10 @@ namespace formatImpl {
             str = "ptr<";
 
         str += demangle(typeid(T).name());
-        str[str.size() - 1] = '>';
+        if (str[str.size() - 1] == '*')
+            str[str.size() - 1] = '>';
+        else
+            str += ">";
 
         if (arg != nullptr)
             str += "(" + sprintPointer(fmt, (void *) arg) + ")";
@@ -133,7 +137,7 @@ namespace formatImpl {
         if (fmt->type == p)
             return sprintPointer(fmt, (void*) arg);
 
-        throw std::invalid_argument("Invalid argument pointer");
+        throw std::invalid_argument(std::string("Invalid argument pointer ") + demangle(typeid(T).name()) + " " + demangle(typeid(fmt->type).name()));
     }
 
     template <typename T>
