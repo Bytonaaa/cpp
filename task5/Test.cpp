@@ -26,7 +26,7 @@ int main() {
 
     printf("%+a, %a, %p\n", 0., 2e-320, (void*)34);
     std::cout << format("%a\n", 2e-323);
-    std::cout << format("%@\n", b);
-    std::vector<int> ta;
-    foo(b);
+    string s = format("%@\n", b);
+    std::cout << s << endl;
+    std::cout << format("%@\n", s);
 }
