@@ -109,6 +109,18 @@ namespace formatImpl {
         throw std::invalid_argument("Invalid argument pointer");
     }
 
+    template <typename T, size_t sz>
+    size_t getSizeOfArray(T(&)[sz]) { return sz; }
+
+    template <typename T, typename S = typename std::enable_if<std::is_array<T>::value, T>::type>
+    std::string sprint(Format const *fmt, T const & arg) {
+        std::string result = "[";
+        for (int i = 0; i < getSizeOfArray(arg); i++)
+            result += std::to_string(arg[i]) + ", ";
+
+        return result + "]";
+    }
+
     template<typename T>
     std::string sprint(Format const *fmt, T arg) {
         throw std::invalid_argument("Invalid argument, or this feature is not implemented.");
@@ -127,8 +139,8 @@ namespace formatImpl {
         throw std::invalid_argument("Invalid format: integral type expected");
     }
 
-    template <typename T, size_t sz>
-    int checkForInt(T[sz], ...) {
+    template <typename T, typename S = typename std::enable_if<std::is_array<T>::value, T>::type>
+    int checkForInt(...) {
         throw std::invalid_argument("Invalid format: integral type expected");
     };
 
