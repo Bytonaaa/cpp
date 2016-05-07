@@ -103,7 +103,8 @@ namespace formatImpl {
     template <typename T,
             typename = typename std::enable_if<!std::is_pointer<T>::value>::type,
             typename = typename std::enable_if<!std::is_array<T>::value>::type,
-            typename = typename std::enable_if<!std::is_same<T, std::string>::value>::type
+            typename = typename std::enable_if<!std::is_same<T, std::string>::value>::type,
+            typename = typename std::enable_if<!std::is_same<T, std::nullptr_t>::value>::type
     >
     struct is_convertible_to_string {
         static std::string convert(T t) {
