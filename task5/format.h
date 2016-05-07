@@ -68,64 +68,81 @@ namespace formatImpl {
 
     std::string sprintPointer(Format const *fmt, void *arg);
 
-    template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_floating_point<T>::value, T>::type arg) {
-        return "float";
-    }
-
-    /*template <typename T, size_t size>
-    std::string sprintAuto<T[size]>(Format const *fmt, void *a) {
-        std::cout << "ARRAY!!!! " << size << " " << typeid(T).name() << std::endl;
-        return "";
-    }//*/
+    const char *demangle(const char *mangledName);
 
     template <typename T>
     std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_pointer<T>::value, T>::type arg) {
         std::string str;
-        if (arg == nullptr) {
+        if (arg == nullptr)
             str = "nullptr<";
-        } else {
+        else
             str = "ptr<";
-        }
 
-        int status = -1;
-        str += abi::__cxa_demangle(typeid(T).name(), NULL, NULL, &status);
+        str += demangle(typeid(T).name());
         str[str.size() - 1] = '>';
 
-        if (arg != nullptr) {
+        if (arg != nullptr)
             str += "(" + sprintPointer(fmt, (void *) arg) + ")";
-        }
 
         return str;
-    }
-
-    template <typename T>
-    std::string sprint(Format const *fmt, typename std::enable_if<std::is_pointer<T>::value, T>::type arg) {
-        if (fmt->type == automatic)
-            return sprintAuto<T>(fmt, arg);
-        else if (fmt->type == p)
-            return sprintPointer(fmt, (void*) arg);
-
-        throw std::invalid_argument("Invalid argument pointer");
     }
 
     template <typename T, size_t sz>
     size_t getSizeOfArray(T(&)[sz]) { return sz; }
 
-    template <typename T, typename S = typename std::enable_if<std::is_array<T>::value, T>::type>
-    std::string sprint(Format const *fmt, T const & arg) {
-        std::string result = "[";
-        for (int i = 0; i < getSizeOfArray(arg); i++)
-            result += std::to_string(arg[i]) + ", ";
+    template <typename T>
+    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_array<T>::value, T>::type const &arg) {
+        std::string result = "[" + std::to_string(arg[0]);
+        for (int i = 1; i < getSizeOfArray(arg); i++)
+            result += ", " + std::to_string(arg[i]);
+        result += "]";
 
-        return result + "]";
+        return result;
+    }
+
+    template <typename T,
+            typename = typename std::enable_if<!std::is_pointer<T>::value>::type,
+            typename = typename std::enable_if<!std::is_array<T>::value>::type
+    >
+    struct is_convertible_to_string {
+        std::string func(T t) {
+            return std::to_string(t);
+        }
+        enum {
+            value = true,
+        };
+        typedef T type;
+    };
+
+    template <typename T>
+    std::string sprintAuto(Format const *fmt, typename is_convertible_to_string<T>::type const &arg) {
+        return std::to_string(arg);
+    }
+
+    template <typename T>
+    std::string sprintAuto(Format const *fmt, T const & arg) {
+        std::string ex = "Can not convert type ";
+        ex += demangle(typeid(T).name());
+        throw std::invalid_argument(ex);
+    }
+
+    template <typename T>
+    std::string sprint(Format const *fmt, typename std::enable_if<std::is_pointer<T>::value, T>::type arg) {
+        if (fmt->type == p)
+            return sprintPointer(fmt, (void*) arg);
+
+        throw std::invalid_argument("Invalid argument pointer");
+    }
+
+    template <typename T>
+    std::string sprint(Format const *fmt, typename std::enable_if<std::is_array<T>::value, T>::type const &arg) {
+        throw std::invalid_argument("Invalid argument, or this feature is not implemented.");
     }
 
     template<typename T>
     std::string sprint(Format const *fmt, T arg) {
         throw std::invalid_argument("Invalid argument, or this feature is not implemented.");
     }
-
 
     template<typename T>
     int checkForInt(typename std::enable_if<std::is_integral<T>::value, T>::type arg) {
@@ -135,14 +152,9 @@ namespace formatImpl {
     }
 
     template <typename T>
-    int checkForInt(T arg) {
-        throw std::invalid_argument("Invalid format: integral type expected");
-    }
-
-    template <typename T, typename S = typename std::enable_if<std::is_array<T>::value, T>::type>
     int checkForInt(...) {
         throw std::invalid_argument("Invalid format: integral type expected");
-    };
+    }
 
     void formatImplementation(Format *fmt, unsigned long size, std::string &str);   //base
 
@@ -158,7 +170,10 @@ namespace formatImpl {
                 } else if (format->precision == WP_READ) {
                     format->precision = checkForInt<T>(curArgument);
                 } else {
-                    str += sprint<typename std::remove_reference<T>::type>(format, curArgument);
+                    if (format->type == automatic)
+                        str += sprintAuto<T>(format, curArgument);
+                    else
+                        str += sprint<T>(format, curArgument);
                     format++;
                     tokensLeft--;
                 }

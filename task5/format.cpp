@@ -718,8 +718,6 @@ namespace formatImpl {
             return "";
         } else if (fmt->type == p) {
             return sprintPointer(fmt, arg);
-        } else if (fmt->type == automatic) {
-            //TODO: return sprintAuto(fmt, arg);
         }
 
         throw std::invalid_argument("Invalid argument: int* found");
@@ -743,5 +741,14 @@ namespace formatImpl {
             } else
                 throw std::out_of_range("Too few arguments");
         }
+    }
+
+    const char *demangle(const char *mangledName) {
+#ifdef __GNUC__
+        int status = -1;
+        return abi::__cxa_demangle(mangledName, NULL, NULL, &status);
+#else
+#error "Demangling is not supported on your compiler"
+#endif
     }
 }
