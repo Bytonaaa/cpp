@@ -144,8 +144,8 @@ namespace formatImpl {
         throw std::invalid_argument("Invalid argument, or this feature is not implemented.");
     }
 
-    template<typename T>
-    int checkForInt(typename std::enable_if<std::is_integral<T>::value, T>::type arg) {
+    template<typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+    int checkForInt(const T &arg) {
         if (arg < 0)
             throw std::invalid_argument("Invalid argument: illegal value " + std::to_string(arg));
         return (int) arg;
