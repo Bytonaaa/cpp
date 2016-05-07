@@ -24,7 +24,7 @@ size_t lazy_string::length() const {
 
 
 lazy_string lazy_string::substr(size_t pos, size_t len) const {
-    if (pos >= sz)
+    if (pos > sz)
         throw std::out_of_range("lazy_string");
     return lazy_string(
             start + pos,
@@ -33,23 +33,14 @@ lazy_string lazy_string::substr(size_t pos, size_t len) const {
     );
 }
 
-lazy_string::ls_char lazy_string::at(size_t i) {
+lazy_string::char_ref lazy_string::at(size_t i) {
     if (i >= sz)
         throw std::out_of_range("lazy_string");
-    return ls_char(this, i);
+    return char_ref(this, i);
 }
 
-lazy_string::ls_char lazy_string::operator[](size_t i) {
-    return ls_char(this, i);
-}
-
-
-lazy_string &lazy_string::operator=(const lazy_string &str) {
-    start = str.start;
-    sz = str.sz;
-    ref = str.ref;
-
-    return *this;
+lazy_string::char_ref lazy_string::operator[](size_t i) {
+    return char_ref(this, i);
 }
 
 std::istream &operator>>(std::istream &is, lazy_string &ls) {
@@ -71,10 +62,11 @@ std::ostream &operator<<(std::ostream &os, lazy_string &ls) {
 }
 
 
-lazy_string::ls_char::ls_char(lazy_string *ls, size_t index) : ls(ls), index(index) { }
+lazy_string::char_ref::char_ref(lazy_string *ls, size_t index) : ls(ls), index(index) { }
 
-lazy_string::ls_char &lazy_string::ls_char::operator=(char c) {
+lazy_string::char_ref &lazy_string::char_ref::operator=(char c) {
     if (ls->ref.use_count() > 1) {
+        std::cout << "copy" << std::endl;
         ls->ref = std::make_shared<std::string>(ls->ref->substr(ls->start, ls->sz));
         ls->start = 0;
         //ls->sz = ls->ref->size();
@@ -84,7 +76,7 @@ lazy_string::ls_char &lazy_string::ls_char::operator=(char c) {
     return *this;
 }
 
-lazy_string::ls_char::operator char() const {
+lazy_string::char_ref::operator char() const {
     return (*ls->ref)[ls->start + index];
 }
 
