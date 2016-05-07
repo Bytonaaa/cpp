@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 #include <typeinfo>
+#include <iostream>
 
 #define DEFAULT_PRECISION (-1)  //default value
 #define WP_READ (-2)    // useful if we want to read a width or a precision value from the arguments list
@@ -70,6 +71,12 @@ namespace formatImpl {
     std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_floating_point<T>::value, T>::type arg) {
         return "float";
     }
+
+    /*template <typename T, size_t size>
+    std::string sprintAuto<T[size]>(Format const *fmt, void *a) {
+        std::cout << "ARRAY!!!! " << size << " " << typeid(T).name() << std::endl;
+        return "";
+    }//*/
 
     template <typename T>
     std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_pointer<T>::value, T>::type arg) {

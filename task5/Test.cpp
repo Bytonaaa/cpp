@@ -25,7 +25,8 @@ int main() {
     std::cout << format("%@ %@ %*d\n", 0.0, (void*)34, 45, 4);
     printf("%+a, %a, %p\n", 0., 2e-320, (void*)34);
     std::cout << format("%a\n", 2e-323);
+    std::cout << format<int[8]>("%@\n", b);
     std::vector<int> ta;
-    std::forward_list<int> at;
+    cout << std::is_array<int[3]>::value << endl;
     foo(b);
 }
