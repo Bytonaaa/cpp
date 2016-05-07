@@ -92,11 +92,20 @@ namespace formatImpl {
         return "nullptr";
     }
 
+    template <typename T>
+    std::string sprintAuto(Format const *fmt, typename std::enable_if<(std::is_array<T>::value &&
+            std::is_same<typename std::remove_all_extents<T>::type, char>::value) ||
+            std::is_same<T, std::string>::value, T>::type const &arg) {
+        return arg;
+    }
+
     template <typename T, size_t sz>
     size_t getSizeOfArray(T(&)[sz]) { return sz; }
 
     template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_array<T>::value, T>::type const &arg) {
+    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_array<T>::value &&
+            !std::is_same<typename std::remove_all_extents<T>::type, char>::value, T>::type const &arg) {
+        std::cout << demangle(typeid(T).name()) << std::endl;
         std::string result = "[" + std::to_string(arg[0]);
         for (int i = 1; i < getSizeOfArray(arg); i++)
             result += ", " + std::to_string(arg[i]);

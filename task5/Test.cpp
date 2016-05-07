@@ -29,5 +29,5 @@ int main() {
     std::cout << format("%a\n", 2e-323);
     string s = format("%@\n", b);
     std::cout << s << endl;
-    std::cout << format("%@\n", s);
+    std::cout << format("%@\n", "string");
 }
