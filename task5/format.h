@@ -143,6 +143,7 @@ namespace format_impl {
 
     template<typename T>
     std::string print_auto(T &arg, typename std::enable_if<!std::is_same<T, std::string>::value && !std::is_pointer<T>::value && !std::is_array<T>::value && !std::is_same<T, std::nullptr_t>::value && !std::is_convertible<T, double>::value>::type* = 0) {
+        throw std::invalid_argument(std::string("Cannot convert ") + demangle(typeid(T).name()) + " to string");
         return "DUMMY";
     }
 
