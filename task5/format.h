@@ -71,14 +71,14 @@ namespace format_impl {
     const char *demangle(const char *mangledName);
 
     template <typename T>
-    std::string sprint(std::string &fmt, typename std::enable_if<std::is_trivially_copyable<T>::value, T>::type &arg) {
+    std::string sprint(std::string &fmt, typename std::enable_if<!std::is_same<std::string, T>::value, T>::type &arg) {
         std::string result((size_t) snprintf(NULL, 0, fmt.c_str(), arg), '\0');
         snprintf(const_cast<char *>(result.c_str()), result.size() + 1, fmt.c_str(), arg);
         return result;
     }
 
     template <typename T>
-    std::string sprint(std::string &fmt, typename std::enable_if<!std::is_trivially_copyable<T>::value, T>::type &arg) {
+    std::string sprint(std::string &fmt, typename std::enable_if<std::is_same<std::string, T>::value, T>::type &arg) {
         return arg;
     }
 
