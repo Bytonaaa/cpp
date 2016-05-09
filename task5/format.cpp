@@ -3,224 +3,40 @@
 #include <iomanip>
 #include "format.h"
 
-/*
- * FormatParser parses a format string into tokens which are understandable for functions below
- */
+namespace format_impl {
+    std::regex regex("%([-+ #0]*)(\\d+|\\*)?(\\.)?(\\d+|\\*)?(hh|ll|[hljztL])?([diuoxXfFeEgAacspn%@])|[^%]+|%");
+    std::regex_iterator<std::string::const_iterator> rend;
 
-namespace formatImpl {
+    void read_flags(Format &fmt, const std::string &str) {
+        const char *next = str.c_str();
 
-    class FormatParser {
-    public:
-        const char *const formatString;
-        const char *next;
-
-        FormatParser(const char *format) : next(format), formatString(format) { };
-
-        void nextToken(Format &fmt) {
-            if (*next == '%') {
-                next++;
-
-                //check for "%%"
-                if (*next == '%') {
-                    fmt.str = "%";
-                    next++;
-                    return;
-                }
-                if (*next == '\0')
-                    throw std::invalid_argument("Invalid format: unexpected end of string");
-
-                readFlags(fmt);
-
-                //reading width
-                if (isdigit(*next))
-                    fmt.width = readNumber();
-                else if (*next == '*')
-                    next++, fmt.width = WP_READ;
-
-                //reading precision
-                if (*next == '.') {
-                    next++;
-
-                    if (isdigit(*next))
-                        fmt.precision = readNumber();
-                    else if (*next == '*')
-                        next++, fmt.precision = WP_READ;
-                    else
-                        fmt.precision = 0;  //"%.d" is equal to "%.0d"
-                }
-
-                readLength(fmt);
-                readType(fmt);
-
-            } else {
-                //reading string
-                while (*next != '%' && *next != '\0') {
-                    fmt.str.push_back(*next);
-                    next++;
-                }
-            }
-        }
-
-    private:
-        void readFlags(Format &fmt) {
-            bool ok = true;
-            while (ok) {
-                switch (*next) {
-                    case '0':
-                        if (!fmt.minus)     //"-" flag discards "0" flag;
-                            fmt.zero = true;
-                        break;
-                    case '+':
-                        fmt.plus = true;    //"+" flag discards " " flag;
-                        fmt.space = false;
-                        break;
-                    case '-':
-                        fmt.minus = true;   //"-" flag discards "0" flag;
-                        fmt.zero = false;
-                        break;
-                    case '#':
-                        fmt.sharp = true;
-                        break;
-                    case ' ':
-                        if (!fmt.plus)      //"+" flag discards " " flag;
-                            fmt.space = true;
-                        break;
-
-                    case '\0':
-                        throw std::invalid_argument("Invalid format: unexpected end of string");
-
-                    default:
-                        ok = false;
-                        next--;
-                }
-                next++;
-            }
-        }
-
-        //parses integer
-        int readNumber() {
-            int num = 0;
-            while (isdigit(*next)) {
-                num *= 10;
-                if (num < 0)
-                    throw std::invalid_argument("Invalid format: overflow while parsing number");
-
-                num += *next - '0';
-                next++;
-            }
-            return num;
-        }
-
-        void readLength(Format &fmt) {
-            switch (*next) {
-                case 'l':
-                    if (next[1] == 'l')
-                        next++, fmt.length = ll;
-                    else
-                        fmt.length = l;
+        while (true)
+            switch (*(next++)) {
+                case '0':
+                    if (!fmt.minus)     //"-" flag discards "0" flag;
+                        fmt.zero = true;
                     break;
-                case 'h':
-                    if (next[1] == 'h')
-                        next++, fmt.length = hh;
-                    else
-                        fmt.length = h;
+                case '+':
+                    fmt.plus = true;    //"+" flag discards " " flag;
+                    fmt.space = false;
                     break;
-                case 'j':
-                    fmt.length = f;
+                case '-':
+                    fmt.minus = true;   //"-" flag discards "0" flag;
+                    fmt.zero = false;
                     break;
-                case 'z':
-                    fmt.length = z;
+                case '#':
+                    fmt.sharp = true;
                     break;
-                case 't':
-                    fmt.length = t;
+                case ' ':
+                    if (!fmt.plus)      //"+" flag discards " " flag;
+                        fmt.space = true;
                     break;
-                case 'L':
-                    fmt.length = L;
 
-                case '\0':
-                    throw std::invalid_argument("Invalid format: unexpected end of format");
                 default:
-                    next--;
-                    break;
+                    goto end;
             }
-            next++;
-        }
 
-        void readType(Format &fmt) {
-            switch (*next) {
-                case 'i':
-                case 'd':
-                    fmt.type = d;
-                    break;
-                case 'u':
-                    fmt.type = u;
-                    break;
-                case 'o':
-                    fmt.type = o;
-                    break;
-                case 'x':
-                    fmt.type = x;
-                    break;
-                case 'X':
-                    fmt.type = X;
-                    break;
-                case 'f':
-                    fmt.type = f;
-                case 'F':
-                    fmt.type = fmt.type == f ? f : F;
-                    if (fmt.precision == -1)
-                        fmt.precision = 6;  //default prescision for floats
-                    break;
-                case 'e':
-                    fmt.type = e;
-                    break;
-                case 'E':
-                    fmt.type = E;
-                    break;
-                case 'g':
-                    fmt.type = g;
-                    break;
-                case 'G':
-                    fmt.type = G;
-                    break;
-                case 'a':
-                    fmt.type = a;
-                    break;
-                case 'A':
-                    fmt.type = A;
-                    break;
-                case 'c':
-                    fmt.type = c;
-                    break;
-                case 's':
-                    fmt.type = s;
-                    break;
-                case 'p':
-                    fmt.type = p;
-                    break;
-                case 'n': //WTF is this???
-                    fmt.type = n;
-                    break;
-                case '@':
-                    fmt.type = automatic;
-                    break;
-                case '\0':
-                    throw std::invalid_argument("Unexpected end of format");
-                default:
-                    throw std::invalid_argument(
-                            format("Invalid format: wrong format specifier %%%c in format \"%s\"", *next,
-                                   formatString));
-            }
-            next++;
-        }
-    };
-
-    void parseFormatString(std::vector<Format> &fmt, const char *format) {
-        FormatParser formatParser(format);
-        while (*formatParser.next) {
-            fmt.push_back(Format());
-            formatParser.nextToken(fmt.back());
-        }
+        end: return;
     }
 
 /*
@@ -347,6 +163,7 @@ namespace formatImpl {
                 return sprintHexFloat(fmt, d);
 
             default:
+                throw std::logic_error("Logic error at sprintFloat()");
                 break;
         }
 
@@ -539,177 +356,41 @@ namespace formatImpl {
     }
 
     std::string sprintPointer(Format const *fmt, void *arg) {
-        std::ostringstream result;
-
-        if (fmt->sharp)
-            result << std::showbase;
-
-        result << arg;
-
-        return result.str();
+        std::string str((size_t) snprintf(NULL, 0, fmt->fmt.c_str(), arg), '\0');
+        snprintf(const_cast<char *>(str.data()), str.size() + 1, fmt->fmt.c_str(), arg);
+        return str;
     }
 
-    template<>
-    std::string sprint(Format const *fmt, int arg) {
-        if (fmt->type == d)
-            return sprintDec(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: int found");
-    }
-
-    template<>
-    std::string sprint(Format const *fmt, unsigned int arg) {
-        if (fmt->type == u)// || fmt->type == x || fmt->type == X || fmt->type == o
-            return sprintDec(fmt, arg);
-        else if (fmt->type == o)
-            return sprintOct(fmt, arg);
-        else if (fmt->type == X || fmt->type == x)
-            return sprintHex(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: unsigned int found");
-    }
-
-
-    template<>
-    std::string sprint(Format const *fmt, double arg) {
-        if (fmt->type == f || fmt->type == F || fmt->type == e || fmt->type == E ||
-            fmt->type == g || fmt->type == G || fmt->type == a || fmt->type == A)
-            return sprintFloat(fmt, arg);
-        else if (fmt->type == automatic)
-            return sprintAuto<double>(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: double found");
-    }
-
-    template<>
-    std::string sprint(Format const *fmt, float arg) {
-        if (fmt->type == f || fmt->type == F || fmt->type == e || fmt->type == E ||
-            fmt->type == g || fmt->type == G || fmt->type == a || fmt->type == A)
-            return sprintFloat(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: float found");
-    }
-
-
-    template<>
-    std::string sprint<std::string>(Format const *fmt, std::string arg) {
-        if (fmt->type == s)
-            return sprintStr(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: std::string found");
-    }
-
-    template<>
-    std::string sprint(Format const *fmt, const char *arg) {
-        if (arg == NULL)
-            //throw std::invalid_argument("Invalid argument: null pointer found");
-            return "(nil)";
-
-        if (fmt->type == s)
-            return sprintStr(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: char* found");
-    }
-
-    template<>
-    std::string sprint(Format const *fmt, char *arg) {
-        return sprint(fmt, (const char *) arg);
-    }
-
-
-    template<>
-    std::string sprint(Format const *fmt, char arg) {
-        if (fmt->type == c)
-            return sprintChar(fmt, arg);
-        else if (fmt->type == d && fmt->length == hh)
-            return sprintDec(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: char found");
-    }
-
-    std::string sprint(Format const *fmt, unsigned char arg) {
-        if (fmt->type == c)
-            return sprintChar(fmt, arg);
-        else if (fmt->length == hh) {
-            if (fmt->type == u)
+    template <typename T>
+    std::string sprintUnsigned(Format const *fmt, T arg) {
+        switch (fmt->type) {
+            case u:
                 return sprintDec(fmt, arg);
-            else if (fmt->type == o)
+            case o:
                 return sprintOct(fmt, arg);
-            else if (fmt->type == X || fmt->type == x)
+            case x:
+            case X:
                 return sprintHex(fmt, arg);
+
+            default:
+                throw std::logic_error("Logic error at sprintUnsigned()");
         }
-
-        throw std::invalid_argument("Invalid argument: unsigned char found");
     }
 
-
-    template<>
-    std::string sprint(Format const *fmt, short int arg) {
-        if (fmt->type == d && fmt->length == hh)
-            return sprintDec(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: short int found");
-    }
-
-    std::string sprint(Format const *fmt, unsigned short int arg) {
-        if (fmt->length == h) {
-            if (fmt->type == u)
-                return sprintDec(fmt, arg);
-            else if (fmt->type == o)
-                return sprintOct(fmt, arg);
-            else if (fmt->type == X || fmt->type == x)
-                return sprintHex(fmt, arg);
-        }
-
-        throw std::invalid_argument("Invalid argument: unsigned short int found");
-    }
-
-
-    template<>
-    std::string sprint(Format const *fmt, long int arg) {
-        if (fmt->type == d && fmt->length == l)
-            return sprintDec(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: long int found");
-    }
-
-    template<>
-    std::string sprint(Format const *fmt, unsigned long int arg) {
-        if (fmt->length == l) {
-            if (fmt->type == u)
-                return sprintDec(fmt, arg);
-            else if (fmt->type == o)
-                return sprintOct(fmt, arg);
-            else if (fmt->type == X || fmt->type == x)
-                return sprintHex(fmt, arg);
-        }
-
-        throw std::invalid_argument("Invalid argument: unsigned long int found");
-    }
-
-
-    template<>
-    std::string sprint(Format const *fmt, long long int arg) {
-        if (fmt->type == d && fmt->length == ll)
-            return sprintDec(fmt, arg);
-
-        throw std::invalid_argument("Invalid argument: long long int found");
-    }
-
-    template<>
-    std::string sprint(Format const *fmt, unsigned long long int arg) {
-        if (fmt->length == ll) {
-            if (fmt->type == u)
-                return sprintDec(fmt, arg);
-            else if (fmt->type == o)
-                return sprintOct(fmt, arg);
-            else if (fmt->type == X || fmt->type == x)
-                return sprintHex(fmt, arg);
-        }
-
-        throw std::invalid_argument("Invalid argument: unsigned long long int found");
-    }
-
+    template <> std::string sprint(Format const *fmt, int arg) { return sprintDec(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, unsigned int arg) { return sprintUnsigned(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, double arg) { return sprintFloat(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, float arg) { return sprintFloat(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, unsigned short int arg) { return sprintUnsigned(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, long int arg) { return sprintDec(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, unsigned long long int arg) { return sprintUnsigned(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, long long int arg) { return sprintDec(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, unsigned char arg) { return (fmt->type == c) ? sprintChar(fmt, arg) : sprintUnsigned(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, char arg) { return (fmt->type == c) ? sprintChar(fmt, arg) : sprintDec(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, char *arg) { return (arg == NULL) ? "(nil)" : sprintStr(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, std::string arg) { return sprintStr(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, short int arg) { return sprintDec(fmt, arg); }
+    template <> std::string sprint(Format const *fmt, unsigned long int arg) { return sprintUnsigned(fmt, arg); }
 
     template<>
     std::string sprint(Format const *fmt, signed int *arg) {
@@ -733,15 +414,32 @@ namespace formatImpl {
         throw std::invalid_argument("Invalid argument: nullptr found");
     }
 
-    void formatImplementation(Format *fmt, unsigned long size, std::string &str) {
-        if (size) {
-            if (fmt->str.size()) {
-                str += fmt->str;
-                formatImplementation(fmt + 1, size - 1, str);
-            } else
-                throw std::out_of_range("Too few arguments");
-        }
-    }
+    template<> bool check_type(FormatSpec len, FormatSpec type, int &) { return (len == def && (type == d || type == i)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, signed char &) { return (len == hh && (type == d || type == i)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, short int &) { return (len == h && (type == d || type == i)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, long int &) { return (len == l && (type == d || type == i)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, long long int &) { return (len == ll && (type == d || type == i)); }
+    //template<> bool check_type(FormatSpec len, FormatSpec type, intmax_t &) { return (len == j && (type == d || type == i)); }
+    //template<> bool check_type(FormatSpec len, FormatSpec type, size_t &) { return (len == z && (type == d || type == i || type == u || type == o || type == x || type == X)); }
+    //template<> bool check_type(FormatSpec len, FormatSpec type, ptrdiff_t &) { return (len == t && (type == d || type == i || type == u || type == o || type == x || type == X)); }
+
+    template<> bool check_type(FormatSpec len, FormatSpec type, unsigned int &) { return (len == def && (type == u || type == o || type == x || type == X)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, unsigned char &) { return (len == hh && (type == u || type == o || type == x || type == X)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, unsigned short int &) { return (len == h && (type == u || type == o || type == x || type == X)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, unsigned long int &) { return (len == l && (type == u || type == o || type == x || type == X)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, unsigned long long int &) { return (len == ll && (type == u || type == o || type == x || type == X)); }
+    //template<> bool check_type(FormatSpec len, FormatSpec type, uintmax_t &) { return (len == j && (type == u || type == o || type == x || type == X)); }
+
+    template<> bool check_type(FormatSpec len, FormatSpec type, double &) { return (len == def && (type == f || type == F || type == e || type == E || type == g || type == G || type == a || type == A)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, long double &) { return (len == L && (type == f || type == F || type == e || type == E || type == g || type == G || type == a || type == A)); }
+
+    template<> bool check_type(FormatSpec len, FormatSpec type, char &) { return (len == def && (type == c)); }
+    //template<> bool check_type(FormatSpec len, FormatSpec type, wint_t &) { return (len == l && (type == c)); }
+
+    template<> bool check_type(FormatSpec len, FormatSpec type, char *&) { return (len == def && (type == s)); }
+    template<> bool check_type(FormatSpec len, FormatSpec type, wchar_t *&) { return (len == l && (type == s)); }
+
+    template<> bool check_type(FormatSpec len, FormatSpec type, void *&) { return (len == def && (type == p)); }
 
     const char *demangle(const char *mangledName) {
 #ifdef __GNUC__

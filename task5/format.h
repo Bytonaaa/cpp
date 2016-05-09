@@ -7,41 +7,57 @@
 #include <typeinfo>
 #include <iostream>
 #include <cxxabi.h>
+#include <regex>
 
 #define DEFAULT_PRECISION (-1)  //default value
-#define WP_READ (-2)    // useful if we want to read a width or a precision value from the arguments list
+#define WP_READ (-2)    // useful if we want to read a width or a precision value from the arguments list\
 
-namespace formatImpl {
+#define RIT_STRING 0
+#define RIT_FLAGS 1
+#define RIT_WIDTH 2
+#define RIT_DOT 3
+#define RIT_PRECISION 4
+#define RIT_LENGTH 5
+#define RIT_SPECIFIER 6
+
+template<typename... Args>
+std::string format(const std::string &formatString, const Args &... args);
+
+namespace format_impl {
+    extern std::regex regex;
+    extern std::regex_iterator<std::string::const_iterator> rend;
+
     enum FormatSpec {
-        def,
-        automatic,
+        def = '\0',
+        automatic = '@',
 
-        d,
-        u,
-        o,
-        x,
-        X,
-        f,
-        F,
-        e,
-        E,
-        g,
-        G,
-        a,
-        A,
-        c,
-        s,
-        p,
-        n, //???
+        d = 'd',
+        i = 'i',
+        u = 'u',
+        o = 'o',
+        x = 'x',
+        X = 'X',
+        f = 'f',
+        F = 'F',
+        e = 'e',
+        E = 'E',
+        g = 'g',
+        G = 'G',
+        a = 'a',
+        A = 'A',
+        c = 'c',
+        s = 's',
+        p = 'p',
+        n = 'n', //???
 
-        hh,
-        h,
-        l,
-        ll,
-        j,
-        z,
-        t,
-        L,
+        hh = '0',
+        h = 'h',
+        l = 'l',
+        ll = '9',
+        j = 'j',
+        z = 'z',
+        t = 't',
+        L = 'L',
     };
 /*
  * There are two types of tokens:
@@ -49,7 +65,7 @@ namespace formatImpl {
  *      2) format specifier (str.size() == 0)
  */
     struct Format {
-        std::string str;
+        std::string fmt;
         union {
             int flags = 0;
             struct {
@@ -66,141 +82,149 @@ namespace formatImpl {
         FormatSpec type;
     };
 
+    struct state {
+        int state = 0;
+        Format format;
+
+        struct state &clear() {
+            state = 0;
+            format = Format();
+            return *this;
+        }
+    };
+
     std::string sprintPointer(Format const *fmt, void *arg);
 
     const char *demangle(const char *mangledName);
 
     template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_pointer<T>::value, T>::type arg) {
-        std::string str;
-        if (arg == nullptr)
-            str = "nullptr<";
-        else
-            str = "ptr<";
-
-        str += demangle(typeid(T).name());
-        str[str.size() - 1] = '>';
-
-        if (arg != nullptr)
-            str += "(" + sprintPointer(fmt, (void *) arg) + ")";
-
-        return str;
+    typename std::enable_if<std::is_pointer<T>::value, std::string>::type sprint(Format const *fmt, T arg) {
+        return sprintPointer(fmt, arg);
     }
 
     template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_same<T, std::nullptr_t>::value, T>::type arg) {
-        return "nullptr";
+    typename std::enable_if<!std::is_pointer<T>::value, std::string>::type sprint(Format const *fmt, T arg) {
+        throw std::invalid_argument("Invalid argument or this type of argument is not supported yet");
     }
 
     template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<(std::is_array<T>::value &&
-            std::is_same<typename std::remove_all_extents<T>::type, char>::value) ||
-            std::is_same<T, std::string>::value, T>::type const &arg) {
-        return arg;
-    }
+    bool check_type(FormatSpec len, FormatSpec type, T &) {
+        if (type == p)
+            return true;
 
-    template <typename T, size_t sz>
-    size_t getSizeOfArray(T(&)[sz]) { return sz; }
-
-    template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<std::is_array<T>::value &&
-            !std::is_same<typename std::remove_all_extents<T>::type, char>::value, T>::type const &arg) {
-        std::cout << demangle(typeid(T).name()) << std::endl;
-        std::string result = "[" + std::to_string(arg[0]);
-        for (int i = 1; i < getSizeOfArray(arg); i++)
-            result += ", " + std::to_string(arg[i]);
-        result += "]";
-
-        return result;
-    }
-
-    template <typename T,
-            typename = typename std::enable_if<!std::is_pointer<T>::value>::type,
-            typename = typename std::enable_if<!std::is_array<T>::value>::type,
-            typename = typename std::enable_if<!std::is_same<T, std::string>::value>::type,
-            typename = typename std::enable_if<!std::is_same<T, std::nullptr_t>::value>::type
-    >
-    struct is_convertible_to_string {
-        static std::string convert(T t) {
-            return std::to_string(t);
-        }
-        enum {
-            value = true,
-        };
-        typedef T type;
-    };
-
-    template <typename T>
-    std::string sprintAuto(Format const *fmt, typename std::enable_if<is_convertible_to_string<T>::value, T>::type const &arg) {
-        return is_convertible_to_string<T>::convert(arg);
+        throw std::invalid_argument("Invalid argument type");
     }
 
     template <typename T>
-    std::string sprintAuto(Format const *fmt, T const & arg) {
-        std::string ex = "Can not convert type ";
-        ex += demangle(typeid(T).name());
-        throw std::invalid_argument(ex);
-    }
-
-    template <typename T>
-    std::string sprint(Format const *fmt, typename std::enable_if<std::is_pointer<T>::value, T>::type arg) {
-        if (fmt->type == p)
-            return sprintPointer(fmt, (void*) arg);
-
-        throw std::invalid_argument(std::string("Invalid argument pointer ") + demangle(typeid(T).name()) + " " + demangle(typeid(fmt->type).name()));
-    }
-
-    template <typename T>
-    std::string sprint(Format const *fmt, typename std::enable_if<std::is_array<T>::value, T>::type const &arg) {
-        throw std::invalid_argument("Invalid argument, or this feature is not implemented.");
+    std::string print_arg(Format &fmt, T &arg) {
+        if (check_type(fmt.length, fmt.type, arg)) {
+            return sprint(&fmt, arg);
+        } else
+            throw std::invalid_argument("Invalid format");
     }
 
     template<typename T>
-    std::string sprint(Format const *fmt, T arg) {
-        throw std::invalid_argument("Invalid argument, or this feature is not implemented.");
-    }
-
-    template<typename T>
-    int checkForInt(const typename std::enable_if<std::is_integral<T>::value, T>::type &arg) {
-        if (arg < 0)
-            throw std::invalid_argument("Invalid argument: illegal value " + std::to_string(arg));
+    int read_int(T &arg, typename std::enable_if<std::is_integral<T>::value>::type* = 0) {
         return (int) arg;
     }
 
-    template <typename T>
-    int checkForInt(const typename std::enable_if<!std::is_integral<T>::value, T>::type &) {
-        throw std::invalid_argument("Invalid format: integral type expected");
+    template<typename T>
+    int read_int(T &arg, typename std::enable_if<!std::is_integral<T>::value>::type* = 0) {
+        throw std::invalid_argument("Invalid argument, expected integral type");
     }
 
-    void formatImplementation(Format *fmt, unsigned long size, std::string &str);   //base
+    void read_flags(Format &fmt, const std::string &str);
 
-    template<typename T, typename... Args>
-    void formatImplementation(Format *format, unsigned long tokensLeft, std::string &str, const T &curArgument, const Args&... args) {
-        if (tokensLeft) {
-            if (format->str.size()) {
-                str += format->str;
-                formatImplementation(format + 1, tokensLeft - 1, str, curArgument, args...);
-            } else {
-                if (format->width == WP_READ) {
-                    format->width = checkForInt<T>(curArgument);
-                } else if (format->precision == WP_READ) {
-                    format->precision = checkForInt<T>(curArgument);
-                } else {
-                    if (format->type == automatic)
-                        str += sprintAuto<T>(format, curArgument);
-                    else
-                        str += sprint<T>(format, curArgument);
-                    format++;
-                    tokensLeft--;
-                }
-                formatImplementation(format, tokensLeft, str, args...);
-            }
-        } else if (sizeof...(args)) {
-            throw std::invalid_argument("Too many arguments are given");
+    template<typename T>
+    bool read_format(state &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str, T &arg) {
+        auto &match = *rit;
+
+        if (match[RIT_SPECIFIER] == "%") {
+            str.append("%");
+            return false;
         }
+
+        if (s.state != 0) {
+            if (s.state == RIT_WIDTH)
+                goto read_precision;
+            if (s.state == RIT_PRECISION)
+                goto read_length;
+        }
+
+        s.state++;
+        if (match[RIT_FLAGS].str().size())
+            read_flags(s.format, match[RIT_FLAGS].str());
+
+        s.state++;
+        if (match[RIT_WIDTH].str().size()) {
+            if (match[RIT_WIDTH] == "*") {
+                s.format.width = read_int(arg);
+                return true;
+            } else
+                s.format.width = atoi(match[RIT_WIDTH].str().c_str());
+        }
+
+        s.state++;
+        read_precision:
+        if (match[RIT_PRECISION].str().size()) {
+            if (match[RIT_PRECISION] == "*") {
+                s.format.precision = read_int(arg);
+                return true;
+            } else
+                s.format.precision = atoi(match[RIT_PRECISION].str().c_str());
+        }
+        else if (match[RIT_DOT].str().size())
+            s.format.precision = 0;
+        s.state++;
+
+        read_length:
+        s.format.length = (FormatSpec) match[RIT_LENGTH].str()[0];
+        s.format.type = (FormatSpec) match[RIT_SPECIFIER].str()[0];
+
+        if (match[RIT_LENGTH].str() == "ll")
+            s.format.length = ll;
+        if (match[RIT_LENGTH].str() == "hh")
+            s.format.length = hh;
+
+        s.format.fmt = match.str();
+
+        str += print_arg(s.format, arg);
+
+        return false;
     };
 
-    void parseFormatString(std::vector<Format> &fmt, const char *format);
+    static void format_implementation(state &s, std::regex_iterator<std::string::const_iterator> &rit,
+                                      std::string &str) {
+        if (rit == rend)
+            return;
+
+        if ((*rit)[RIT_STRING] == "%")
+            throw std::invalid_argument("Invalid format");
+
+        if ((*rit)[RIT_SPECIFIER] == "") {
+            str.append((*rit)[RIT_STRING]);
+        } else if ((*rit)[RIT_SPECIFIER] == "%") {
+            str.append((*rit)[RIT_SPECIFIER]);
+        }
+        format_implementation(s.clear(), ++rit, str);
+    }
+
+    template<typename T, typename... Args>
+    void format_implementation(state &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str,
+                               const T &arg, Args &... args) {
+        if ((*rit)[RIT_STRING] == "%")
+            throw std::invalid_argument("Invalid format");
+
+        if ((*rit)[RIT_SPECIFIER] == "") {
+            str.append((*rit)[RIT_STRING]);
+            format_implementation(s.clear(), ++rit, str, arg, args...);
+        } else {
+            if (read_format<T>(s, rit, str, const_cast<T &>(arg)))
+                format_implementation(s, rit, str, args...);
+            else
+                format_implementation(s.clear(), ++rit, str, args...);
+        }
+    };
 }
 
 /**
@@ -229,13 +253,14 @@ namespace formatImpl {
  */
 
 template<typename... Args>
-std::string format(std::string const &formatString, const Args&... args) {
+std::string format(std::string const &formatString, const Args &... args) {
     std::string str;
-    std::vector<formatImpl::Format> fmt;
 
-    formatImpl::parseFormatString(fmt, formatString.c_str()); //generates tokens from format string
+    std::regex_iterator<std::string::const_iterator> rgx_iterator(formatString.begin(), formatString.end(),
+                                                                  format_impl::regex);
+    format_impl::state state;
 
-    formatImpl::formatImplementation(fmt.data(), fmt.size(), str, args...);
+    format_impl::format_implementation(state, rgx_iterator, str, args...);
 
     return str;
 }
