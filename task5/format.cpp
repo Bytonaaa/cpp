@@ -4,7 +4,7 @@
 #include "format.h"
 
 namespace format_impl {
-    std::regex regex("%([-+ #0]*)(\\d+|\\*)?(\\.)?(\\d+|\\*)?(hh|ll|[hljztL])?([diuoxXfFeEgAacspn%@])|[^%]+|%");
+    std::regex regex("%([-+ #0]*)(\\d+|\\*)?(\\.)?(\\d+|\\*)?(hh|ll|[hljztL])?([diuoxXfFeEgGAacspn%@])|[^%]+|%");
     std::regex_iterator<std::string::const_iterator> rend;
 
     template<> bool check_type(FormatSpec len, FormatSpec type, int &) { return (len == def && (type == d || type == i)); }
