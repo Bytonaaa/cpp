@@ -108,7 +108,7 @@ namespace format_impl {
     template<typename T>
     std::string print_auto(T &arg, typename std::enable_if<std::is_pointer<T>::value>::type* = 0) {
         if (arg == nullptr)
-            return std::string("nullptr<") + demangle(typeid(T).name()) + ">";
+            return std::string("nullptr<") + demangle(typeid(typename std::remove_pointer<T>::type).name()) + ">";
         else
             return std::string("ptr<") + demangle(typeid(typename std::remove_pointer<T>::type).name()) + ">(" + format("%@", *arg) + ")";
     }
@@ -118,9 +118,17 @@ namespace format_impl {
         return "nullptr";
     }
 
+    template <typename T, size_t sz>
+    size_t get_size_of_array(T(&)[sz]) { return sz; }
+
     template<typename T>
     std::string print_auto(T &arg, typename std::enable_if<std::is_array<T>::value>::type* = 0) {
-        return std::to_string(sizeof(arg));
+        std::string result = "[" + std::to_string(arg[0]);
+        for (int i = 1; i < get_size_of_array(arg); i++)
+            result += "," + std::to_string(arg[i]);
+        result += "]";
+
+        return result;
     }
 
     template<typename T>
@@ -129,7 +137,12 @@ namespace format_impl {
     }
 
     template<typename T>
-    std::string print_auto(T &arg, typename std::enable_if<!std::is_pointer<T>::value && !std::is_array<T>::value && !std::is_same<T, std::nullptr_t>::value && !std::is_convertible<T, double>::value>::type* = 0) {
+    std::string print_auto(T &arg, typename std::enable_if<std::is_same<T, std::string>::value>::type* = 0) {
+        return arg;
+    }
+
+    template<typename T>
+    std::string print_auto(T &arg, typename std::enable_if<!std::is_same<T, std::string>::value && !std::is_pointer<T>::value && !std::is_array<T>::value && !std::is_same<T, std::nullptr_t>::value && !std::is_convertible<T, double>::value>::type* = 0) {
         return "DUMMY";
     }
 

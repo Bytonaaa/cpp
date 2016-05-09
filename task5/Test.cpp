@@ -17,7 +17,7 @@ int main() {
 
     printf("%+a, %a, %p\n", 0., 2e-320, (void*)34);
     std::cout << format("%a\n", 2e-323);
-    string s = format("%@\n", b);
+    string s = format("%@", b);
     std::cout << s << endl;
-    std::cout << format("%@\n", "string");
+    std::cout << format("%@\n", &s);
 }
