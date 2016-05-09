@@ -141,7 +141,7 @@ namespace format_impl {
         typedef typename remove_all_const<T>::type TT;
 
         if (rit == rend)
-            throw std::out_of_range("Too many arguments");
+            throw std::invalid_argument("Too many arguments are given");
 
         if ((*rit)[RIT_STRING] == "%")
             throw std::invalid_argument(std::string("Invalid format %") + (*(++rit))[0].str());
