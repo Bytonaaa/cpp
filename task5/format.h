@@ -150,6 +150,8 @@ namespace format_impl {
             str.append((*rit)[RIT_STRING]);
         } else if ((*rit)[RIT_SPECIFIER] == "%") {
             str.push_back('%');
+        } else {
+            throw std::out_of_range("Too few arguments");
         }
         format_implementation(s, ++rit, str);
     }
@@ -158,6 +160,9 @@ namespace format_impl {
     void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str,
                                const T &arg, const Args &... args) {
         typedef typename remove_all_const<T>::type TT;
+
+        if (rit == rend)
+            throw std::out_of_range("Too many arguments");
 
         if ((*rit)[RIT_STRING] == "%")
             throw std::invalid_argument(std::string("Invalid format %") + (*(++rit))[0].str());

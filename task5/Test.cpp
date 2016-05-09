@@ -7,7 +7,7 @@ using namespace std;
 int main() {
     std::string s ("%d subject %3f has %%%0+3.100500lli%d a submarine as a subsequence");
 
-    cout << format("%f azaz", (float) 1.0f) << endl;
+    cout << format("%d%d", 1) << endl;
 
     cout << "///////////////////////////" << endl;
 
