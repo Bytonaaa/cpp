@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cxxabi.h>
 #include <regex>
+#include <type_traits>
 
 #define RIT_STRING 0
 #define RIT_FLAGS 1
