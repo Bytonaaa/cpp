@@ -35,6 +35,23 @@ namespace format_impl {
 
     template<> bool check_type(FormatSpec len, FormatSpec type, void *&) { return (len == def && (type == p)); }
 
+    void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str) {
+        if (rit == rend)
+            return;
+
+        if ((*rit)[RIT_STRING] == "%")
+            throw std::invalid_argument("Invalid format");
+
+        if ((*rit)[RIT_SPECIFIER] == "") {
+            str.append((*rit)[RIT_STRING]);
+        } else if ((*rit)[RIT_SPECIFIER] == "%") {
+            str.push_back('%');
+        } else {
+            throw std::out_of_range("Too few arguments");
+        }
+        format_implementation(s, ++rit, str);
+    }
+
     const char *demangle(const char *mangledName) {
 #ifdef __GNUC__
         int status = -1;

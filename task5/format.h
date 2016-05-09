@@ -84,12 +84,7 @@ namespace format_impl {
 
     template <typename T>
     bool check_type(FormatSpec len, FormatSpec type, T &) {
-        if (type == p)
-            return true;
-        if (type == s && (std::is_same<T, char *>::value || std::is_same<T, std::string>::value))
-            return true;
-
-        throw std::invalid_argument(std::string("Invalid argument type \"") + demangle(typeid(T).name()) + "\"");
+        return type == p || (type == s && (std::is_same<T, char *>::value || std::is_same<T, std::string>::value));
     }
 
     template <typename T>
@@ -97,7 +92,7 @@ namespace format_impl {
         if (check_type(len, type, arg)) {
             return sprint<T>(fmt, arg);
         } else
-            throw std::invalid_argument("Invalid format");
+            throw std::invalid_argument(std::string("Invalid argument type \"") + demangle(typeid(T).name()) + "\"");
     }
 
     template<typename T>
@@ -138,23 +133,7 @@ namespace format_impl {
         return false;
     };
 
-    static void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit,
-                                      std::string &str) {
-        if (rit == rend)
-            return;
-
-        if ((*rit)[RIT_STRING] == "%")
-            throw std::invalid_argument("Invalid format");
-
-        if ((*rit)[RIT_SPECIFIER] == "") {
-            str.append((*rit)[RIT_STRING]);
-        } else if ((*rit)[RIT_SPECIFIER] == "%") {
-            str.push_back('%');
-        } else {
-            throw std::out_of_range("Too few arguments");
-        }
-        format_implementation(s, ++rit, str);
-    }
+    void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str);
 
     template<typename T, typename... Args>
     void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str,
@@ -215,7 +194,7 @@ namespace format_impl {
 template<typename... Args>
 std::string format(std::string const &formatString, const Args &... args) {
     std::string s, str;
-    std::cout << formatString << std::endl;
+    //std::cout << formatString << std::endl;
 
     std::regex_iterator<std::string::const_iterator> rgx_iterator(formatString.begin(), formatString.end(),
                                                                   format_impl::regex);
