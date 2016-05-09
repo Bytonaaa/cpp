@@ -160,7 +160,7 @@ namespace format_impl {
         typedef typename remove_all_const<T>::type TT;
 
         if ((*rit)[RIT_STRING] == "%")
-            throw std::invalid_argument("Invalid format");
+            throw std::invalid_argument(std::string("Invalid format ") + (*(++rit))[0].str());
 
         if ((*rit)[RIT_SPECIFIER] == "") {
             str.append((*rit)[RIT_STRING]);
@@ -210,6 +210,7 @@ namespace format_impl {
 template<typename... Args>
 std::string format(std::string const &formatString, const Args &... args) {
     std::string s, str;
+    std::cout << formatString << std::endl;
 
     std::regex_iterator<std::string::const_iterator> rgx_iterator(formatString.begin(), formatString.end(),
                                                                   format_impl::regex);
