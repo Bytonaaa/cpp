@@ -89,7 +89,7 @@ namespace format_impl {
         if (type == s && (std::is_same<T, char *>::value || std::is_same<T, std::string>::value))
             return true;
 
-        throw std::invalid_argument(std::string("Invalid argument type ") + demangle(typeid(T).name()));
+        throw std::invalid_argument(std::string("Invalid argument type \"") + demangle(typeid(T).name()) + "\"");
     }
 
     template <typename T>
@@ -160,7 +160,7 @@ namespace format_impl {
         typedef typename remove_all_const<T>::type TT;
 
         if ((*rit)[RIT_STRING] == "%")
-            throw std::invalid_argument(std::string("Invalid format ") + (*(++rit))[0].str());
+            throw std::invalid_argument(std::string("Invalid format %") + (*(++rit))[0].str());
 
         if ((*rit)[RIT_SPECIFIER] == "") {
             str.append((*rit)[RIT_STRING]);

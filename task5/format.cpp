@@ -23,6 +23,7 @@ namespace format_impl {
     template<> bool check_type(FormatSpec len, FormatSpec type, unsigned long long int &) { return (len == ll && (type == u || type == o || type == x || type == X)); }
     //template<> bool check_type(FormatSpec len, FormatSpec type, uintmax_t &) { return (len == j && (type == u || type == o || type == x || type == X)); }
 
+    template<> bool check_type(FormatSpec len, FormatSpec type, float &) { return (len == def && (type == f || type == F || type == e || type == E || type == g || type == G || type == a || type == A)); }
     template<> bool check_type(FormatSpec len, FormatSpec type, double &) { return (len == def && (type == f || type == F || type == e || type == E || type == g || type == G || type == a || type == A)); }
     template<> bool check_type(FormatSpec len, FormatSpec type, long double &) { return (len == L && (type == f || type == F || type == e || type == E || type == g || type == G || type == a || type == A)); }
 
