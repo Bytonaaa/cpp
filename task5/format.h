@@ -129,6 +129,11 @@ namespace format_impl {
     }
 
     template<typename T>
+    std::string print_auto(T &arg, typename std::enable_if<!std::is_pointer<T>::value && !std::is_array<T>::value && !std::is_same<T, std::nullptr_t>::value && !std::is_convertible<T, double>::value>::type* = 0) {
+        return "DUMMY";
+    }
+
+    template<typename T>
     bool read_format(std::string &s, std::string &str, T &arg) {
         std::smatch match;
         std::regex_search(s, match, regex);
