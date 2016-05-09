@@ -89,7 +89,7 @@ namespace format_impl {
         if (type == s && (std::is_same<T, char *>::value || std::is_same<T, std::string>::value))
             return true;
 
-        throw std::invalid_argument("Invalid argument type ");
+        throw std::invalid_argument(std::string("Invalid argument type ") + demangle(typeid(T).name()));
     }
 
     template <typename T>
