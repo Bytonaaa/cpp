@@ -106,9 +106,37 @@ namespace format_impl {
     }
 
     template<typename T>
+    std::string print_auto(T &arg, typename std::enable_if<std::is_pointer<T>::value>::type* = 0) {
+        if (arg == nullptr)
+            return std::string("nullptr<") + demangle(typeid(T).name()) + ">";
+        else
+            return std::string("ptr<") + demangle(typeid(typename std::remove_pointer<T>::type).name()) + ">(" + format("%@", *arg) + ")";
+    }
+
+    template<typename T>
+    std::string print_auto(T &arg, typename std::enable_if<std::is_same<T, std::nullptr_t>::value>::type* = 0) {
+        return "nullptr";
+    }
+
+    template<typename T>
+    std::string print_auto(T &arg, typename std::enable_if<std::is_array<T>::value>::type* = 0) {
+        return std::to_string(sizeof(arg));
+    }
+
+    template<typename T>
+    std::string print_auto(T &arg, typename std::enable_if<std::is_convertible<T, double>::value>::type* = 0) {
+        return std::to_string(arg);
+    }
+
+    template<typename T>
     bool read_format(std::string &s, std::string &str, T &arg) {
         std::smatch match;
         std::regex_search(s, match, regex);
+
+        if (match[RIT_SPECIFIER] == "@") {
+            str += print_auto(arg);
+            return false;
+        }
 
         if (match[RIT_WIDTH] == "*") {
             s.replace((size_t) match.position(RIT_WIDTH), 1, std::to_string(read_int(arg)));

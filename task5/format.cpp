@@ -55,9 +55,9 @@ namespace format_impl {
     const char *demangle(const char *mangledName) {
 #ifdef __GNUC__
         int status = -1;
-        return abi::__cxa_demangle(mangledName, NULL, NULL, &status);
+        return abi::__cxa_demangle(mangledName, NULL, NULL, NULL);
 #else
-        #error "Demangling is not supported on your compiler"
+        return mangledName;
 #endif
     }
 }
