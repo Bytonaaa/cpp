@@ -22,7 +22,7 @@ void foo(T arg) {
 int main() {
     std::string s ("%d subject %3f has %%%0+3.100500lli%d a submarine as a subsequence");
 
-    cout << format("%p azaz", (void *) NULL) << endl;
+    cout << format("%#x azaz", (unsigned) 0) << endl;
 
     cout << "///////////////////////////" << endl;
 

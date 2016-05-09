@@ -9,9 +9,6 @@
 #include <cxxabi.h>
 #include <regex>
 
-#define DEFAULT_PRECISION (-1)  //default value
-#define WP_READ (-2)    // useful if we want to read a width or a precision value from the arguments list\
-
 #define RIT_STRING 0
 #define RIT_FLAGS 1
 #define RIT_WIDTH 2
@@ -59,52 +56,14 @@ namespace format_impl {
         t = 't',
         L = 'L',
     };
-/*
- * There are two types of tokens:
- *      1) string (str.size() > 0)
- *      2) format specifier (str.size() == 0)
- */
-    struct Format {
-        std::string fmt;
-        union {
-            int flags = 0;
-            struct {
-                bool zero:1;    //'0'
-                bool plus:1;    //'+'
-                bool minus:1;   //'-'
-                bool sharp:1;   //'#'
-                bool space:1;   //' '
-            };
-        };
-        int width = 0;
-        int precision = DEFAULT_PRECISION;
-        FormatSpec length;
-        FormatSpec type;
-    };
-
-    struct state {
-        int state = 0;
-        Format format;
-
-        struct state &clear() {
-            state = 0;
-            format = Format();
-            return *this;
-        }
-    };
-
-    std::string sprintPointer(Format const *fmt, void *arg);
 
     const char *demangle(const char *mangledName);
 
     template <typename T>
-    typename std::enable_if<std::is_pointer<T>::value, std::string>::type sprint(Format const *fmt, T arg) {
-        return sprintPointer(fmt, arg);
-    }
-
-    template <typename T>
-    typename std::enable_if<!std::is_pointer<T>::value, std::string>::type sprint(Format const *fmt, T arg) {
-        throw std::invalid_argument("Invalid argument or this type of argument is not supported yet");
+    std::string sprint(std::string &fmt, T &arg) {
+        std::string result((size_t) snprintf(NULL, 0, fmt.c_str(), arg), '\0');
+        snprintf(const_cast<char *>(result.c_str()), result.size() + 1, fmt.c_str(), arg);
+        return result;
     }
 
     template <typename T>
@@ -116,9 +75,9 @@ namespace format_impl {
     }
 
     template <typename T>
-    std::string print_arg(Format &fmt, T &arg) {
-        if (check_type(fmt.length, fmt.type, arg)) {
-            return sprint(&fmt, arg);
+    std::string print_arg(std::string fmt, FormatSpec len, FormatSpec type, T &arg) {
+        if (check_type(len, type, arg)) {
+            return sprint(fmt, arg);
         } else
             throw std::invalid_argument("Invalid format");
     }
@@ -130,70 +89,38 @@ namespace format_impl {
 
     template<typename T>
     int read_int(T &arg, typename std::enable_if<!std::is_integral<T>::value>::type* = 0) {
-        throw std::invalid_argument("Invalid argument, expected integral type");
+        throw std::invalid_argument(std::string("Invalid argument, expected integral type found ") + demangle(typeid(T).name()));
     }
 
-    void read_flags(Format &fmt, const std::string &str);
-
     template<typename T>
-    bool read_format(state &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str, T &arg) {
-        auto &match = *rit;
+    bool read_format(std::string &s, std::string &str, T &arg) {
+        std::smatch match;
+        std::regex_search(s, match, regex);
 
-        if (match[RIT_SPECIFIER] == "%") {
-            str.append("%");
-            return false;
+        if (match[RIT_WIDTH] == "*") {
+            s.replace((size_t) match.position(RIT_WIDTH), 1, std::to_string(read_int(arg)));
+            return true;
         }
 
-        if (s.state != 0) {
-            if (s.state == RIT_WIDTH)
-                goto read_precision;
-            if (s.state == RIT_PRECISION)
-                goto read_length;
+        if (match[RIT_PRECISION] == "*") {
+            s.replace((size_t) match.position(RIT_PRECISION), 1, std::to_string(read_int(arg)));
+            return true;
         }
 
-        s.state++;
-        if (match[RIT_FLAGS].str().size())
-            read_flags(s.format, match[RIT_FLAGS].str());
-
-        s.state++;
-        if (match[RIT_WIDTH].str().size()) {
-            if (match[RIT_WIDTH] == "*") {
-                s.format.width = read_int(arg);
-                return true;
-            } else
-                s.format.width = atoi(match[RIT_WIDTH].str().c_str());
-        }
-
-        s.state++;
-        read_precision:
-        if (match[RIT_PRECISION].str().size()) {
-            if (match[RIT_PRECISION] == "*") {
-                s.format.precision = read_int(arg);
-                return true;
-            } else
-                s.format.precision = atoi(match[RIT_PRECISION].str().c_str());
-        }
-        else if (match[RIT_DOT].str().size())
-            s.format.precision = 0;
-        s.state++;
-
-        read_length:
-        s.format.length = (FormatSpec) match[RIT_LENGTH].str()[0];
-        s.format.type = (FormatSpec) match[RIT_SPECIFIER].str()[0];
+        FormatSpec len = (FormatSpec) match[RIT_LENGTH].str()[0];
+        FormatSpec type = (FormatSpec) match[RIT_SPECIFIER].str()[0];
 
         if (match[RIT_LENGTH].str() == "ll")
-            s.format.length = ll;
+            len = ll;
         if (match[RIT_LENGTH].str() == "hh")
-            s.format.length = hh;
+            len = hh;
 
-        s.format.fmt = match.str();
-
-        str += print_arg(s.format, arg);
+        str += print_arg(match[RIT_STRING], len, type, arg);
 
         return false;
     };
 
-    static void format_implementation(state &s, std::regex_iterator<std::string::const_iterator> &rit,
+    static void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit,
                                       std::string &str) {
         if (rit == rend)
             return;
@@ -204,26 +131,34 @@ namespace format_impl {
         if ((*rit)[RIT_SPECIFIER] == "") {
             str.append((*rit)[RIT_STRING]);
         } else if ((*rit)[RIT_SPECIFIER] == "%") {
-            str.append((*rit)[RIT_SPECIFIER]);
+            str.push_back('%');
         }
-        format_implementation(s.clear(), ++rit, str);
+        format_implementation(s, ++rit, str);
     }
 
     template<typename T, typename... Args>
-    void format_implementation(state &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str,
+    void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str,
                                const T &arg, Args &... args) {
         if ((*rit)[RIT_STRING] == "%")
             throw std::invalid_argument("Invalid format");
 
         if ((*rit)[RIT_SPECIFIER] == "") {
             str.append((*rit)[RIT_STRING]);
-            format_implementation(s.clear(), ++rit, str, arg, args...);
+        } else if ((*rit)[RIT_SPECIFIER] == "%") {
+            str.push_back('%');
         } else {
-            if (read_format<T>(s, rit, str, const_cast<T &>(arg)))
+            if (s.empty())
+                s = rit->str();
+
+            if (read_format<T>(s, str, const_cast<T &>(arg)))
                 format_implementation(s, rit, str, args...);
-            else
-                format_implementation(s.clear(), ++rit, str, args...);
+            else {
+                s.clear();
+                format_implementation(s, ++rit, str, args...);
+            }
+            return;
         }
+        format_implementation(s, ++rit, str, arg, args...);
     };
 }
 
@@ -254,13 +189,12 @@ namespace format_impl {
 
 template<typename... Args>
 std::string format(std::string const &formatString, const Args &... args) {
-    std::string str;
+    std::string s, str;
 
     std::regex_iterator<std::string::const_iterator> rgx_iterator(formatString.begin(), formatString.end(),
                                                                   format_impl::regex);
-    format_impl::state state;
 
-    format_impl::format_implementation(state, rgx_iterator, str, args...);
+    format_impl::format_implementation(s, rgx_iterator, str, args...);
 
     return str;
 }
