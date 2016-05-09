@@ -4,25 +4,10 @@
 
 using namespace std;
 
-/*namespace std {
-    class String : public string {
-    public:
-        ~String() {
-            std::string::~basic_string();
-            cout << "String deleted" << endl;
-        }
-    };
-}*/
-
-template <typename T>
-void foo(T arg) {
-    cout << is_pointer<T>::value;
-}
-
 int main() {
     std::string s ("%d subject %3f has %%%0+3.100500lli%d a submarine as a subsequence");
 
-    cout << format("%#x azaz", (unsigned) 0) << endl;
+    cout << format("%s azaz", s) << endl;
 
     cout << "///////////////////////////" << endl;
 

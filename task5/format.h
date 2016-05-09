@@ -57,27 +57,44 @@ namespace format_impl {
         L = 'L',
     };
 
+    template<typename T> struct remove_all_const : std::remove_const<T> {};
+
+    template<typename T> struct remove_all_const<T*> {
+        typedef typename remove_all_const<T>::type *type;
+    };
+
+    template<typename T> struct remove_all_const<T * const> {
+        typedef typename remove_all_const<T>::type *type;
+    };
+
     const char *demangle(const char *mangledName);
 
     template <typename T>
-    std::string sprint(std::string &fmt, T &arg) {
+    std::string sprint(std::string &fmt, typename std::enable_if<std::is_trivially_copyable<T>::value, T>::type &arg) {
         std::string result((size_t) snprintf(NULL, 0, fmt.c_str(), arg), '\0');
         snprintf(const_cast<char *>(result.c_str()), result.size() + 1, fmt.c_str(), arg);
         return result;
     }
 
     template <typename T>
+    std::string sprint(std::string &fmt, typename std::enable_if<!std::is_trivially_copyable<T>::value, T>::type &arg) {
+        return arg;
+    }
+
+    template <typename T>
     bool check_type(FormatSpec len, FormatSpec type, T &) {
         if (type == p)
             return true;
+        if (type == s && (std::is_same<T, char *>::value || std::is_same<T, std::string>::value))
+            return true;
 
-        throw std::invalid_argument("Invalid argument type");
+        throw std::invalid_argument("Invalid argument type ");
     }
 
     template <typename T>
     std::string print_arg(std::string fmt, FormatSpec len, FormatSpec type, T &arg) {
         if (check_type(len, type, arg)) {
-            return sprint(fmt, arg);
+            return sprint<T>(fmt, arg);
         } else
             throw std::invalid_argument("Invalid format");
     }
@@ -138,7 +155,9 @@ namespace format_impl {
 
     template<typename T, typename... Args>
     void format_implementation(std::string &s, std::regex_iterator<std::string::const_iterator> &rit, std::string &str,
-                               const T &arg, Args &... args) {
+                               const T &arg, const Args &... args) {
+        typedef typename remove_all_const<T>::type TT;
+
         if ((*rit)[RIT_STRING] == "%")
             throw std::invalid_argument("Invalid format");
 
@@ -150,7 +169,7 @@ namespace format_impl {
             if (s.empty())
                 s = rit->str();
 
-            if (read_format<T>(s, str, const_cast<T &>(arg)))
+            if (read_format<TT>(s, str, const_cast<TT &>(arg)))
                 format_implementation(s, rit, str, args...);
             else {
                 s.clear();
