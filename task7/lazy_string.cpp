@@ -7,12 +7,20 @@ lazy_string::operator std::string() {
     return ref->substr(start, sz);
 };
 
-lazy_string::lazy_string(const std::string &str) : ref(std::make_shared<std::string>(str)), start(0), sz(str.size()) { }
+lazy_string::lazy_string(const std::string &str) {
+    ref = std::make_shared<std::string>(str);
+    start = 0;
+    sz = str.size();
+}
 
-lazy_string::lazy_string() : ref(std::make_shared<std::string>("")), start(0), sz(0) { }
+lazy_string::lazy_string() {
+    start = 0;
+    sz = 0;
+}
 
-lazy_string::lazy_string(size_t start, size_t sz, std::shared_ptr<std::string> ref) : ref(ref), start(start), sz(sz) { }
-
+lazy_string::lazy_string(const lazy_string &ls) {
+    *this = ls;
+}
 
 size_t lazy_string::size() const {
     return sz;
@@ -23,14 +31,20 @@ size_t lazy_string::length() const {
 }
 
 
-lazy_string lazy_string::substr(size_t pos, size_t len) const {
+lazy_string lazy_string::substr(size_t pos, size_t len) {
+    mtx.lock();
+
     if (pos > sz)
         throw std::out_of_range("lazy_string");
-    return lazy_string(
-            start + pos,
-            pos + len > sz ? (sz - pos) : len,
-            ref
-    );
+
+    lazy_string result;
+
+    result.ref = ref;
+    result.start = start + pos;
+    result.sz = pos + len > sz ? (sz - pos) : len;
+
+    mtx.unlock();
+    return result;
 }
 
 lazy_string::char_ref lazy_string::at(size_t i) {
@@ -44,6 +58,8 @@ lazy_string::char_ref lazy_string::operator[](size_t i) {
 }
 
 std::istream &operator>>(std::istream &is, lazy_string &ls) {
+    ls.mtx.lock();
+
     auto ref = std::make_shared<std::string>();
     is >> *ref;
 
@@ -52,6 +68,7 @@ std::istream &operator>>(std::istream &is, lazy_string &ls) {
     ls.start = 0;
     ls.sz = ref->size();
 
+    ls.mtx.unlock();
     return is;
 }
 
@@ -65,17 +82,14 @@ std::ostream &operator<<(std::ostream &os, lazy_string &ls) {
 lazy_string::char_ref::char_ref(lazy_string *ls, size_t index) : ls(ls), index(index) { }
 
 lazy_string::char_ref &lazy_string::char_ref::operator=(char c) {
-    static std::mutex mtx;
-
-    mtx.lock();
+    ls->mtx.lock();
     if (ls->ref.use_count() > 1) {
-        std::cout << "copy" << std::endl;
         ls->ref = std::make_shared<std::string>(ls->ref->substr(ls->start, ls->sz));
         ls->start = 0;
         //ls->sz = ls->ref->size();
     }
     (*ls->ref)[ls->start + index] = c;
-    mtx.unlock();
+    ls->mtx.unlock();
 
     return *this;
 }
@@ -84,3 +98,21 @@ lazy_string::char_ref::operator char() const {
     return (*ls->ref)[ls->start + index];
 }
 
+lazy_string &lazy_string::operator=(const lazy_string &ls) {
+    if (this == &ls)
+        return *this;
+
+    lazy_string &kostyl = const_cast<lazy_string&>(ls);
+
+    mtx.lock();
+    kostyl.mtx.lock();
+
+    ref = ls.ref;
+    start = ls.start;
+    sz = ls.sz;
+
+    mtx.unlock();
+    kostyl.mtx.unlock();
+
+    return *this;
+}

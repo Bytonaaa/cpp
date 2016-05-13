@@ -46,6 +46,14 @@ public:
     lazy_string(const std::string &str);
 
     /**
+     * Constructs new lazy_string from a lazy_string.
+     * Does not copy the data.
+     *
+     * @param   ls A lazy_string
+     */
+    lazy_string(const lazy_string &ls);
+
+    /**
      * Returns the number of characters in the string
      *
      * @return The number of characters in the string.
@@ -73,7 +81,7 @@ public:
      *
      * @throws  std::out_of_range if pos > size()
      */
-    lazy_string substr(size_t pos = 0, size_t len = std::string::npos) const;
+    lazy_string substr(size_t pos = 0, size_t len = std::string::npos);
 
     /**
      * Returns a reference to the character at specified location pos.
@@ -104,6 +112,15 @@ public:
     char_ref operator[](size_t pos);
 
     /**
+     * Replaces the contents of the string.
+     *
+     * @param   ls A lazy_string to be used as source to initialize the string with
+     *
+     * @return  *this
+     */
+    lazy_string &operator=(const lazy_string &ls);
+
+    /**
      * Extracts a string from the input stream is, storing the sequence in ls,
      * which is overwritten (the previous value of ls is replaced).
      *
@@ -127,8 +144,7 @@ public:
 private:
     size_t start, sz;
     std::shared_ptr<std::string> ref;
-
-    lazy_string(size_t start, size_t sz, std::shared_ptr<std::string> ref);
+    std::mutex mtx;
 };
 
 #endif //TASK6_LAZY_STRING_H

@@ -77,8 +77,9 @@ int main() {
     cout << "......" << endl;
     auto s = lazy_string("getget");
     auto ss = s.substr(2, 3);
-    string sss = "string";
-    cout << s << endl << ss << endl << sss;
-    s[2] = 'd';
     cout << s << endl << ss << endl;
+    s[2] = 'd';
+    cout << s[0] << endl;
+    cout << s << endl << ss << endl;
+    cout << "......" << endl;
 }
