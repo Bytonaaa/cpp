@@ -220,13 +220,34 @@ namespace format_impl {
  * @param  format
  *         A <a href="http://cplusplus.com/printf">format string</a>
  *
+ *         Additional format specifier %@:
+ *
+ *         1) if type of argument is nullptr_t returns "nullptr_t"
+ *         2) if argument is pointer:
+ *              a) if pointer is nullptr returns "nullptr<* type of pointer here *>"
+ *              b) otherwise returns "ptr<* type of pointer here*>(* dereferenced value here*)"
+ *         3) if argument is an array returns the string that contains the elements of an array
+ *         4) if argument can be casted to std:string returns result of the cast
+ *         5) otherwise throws std::invalid_argument
+ *
+ *         Example:
+ *         {@code
+ *              int a[5] = {1, 2, 3, 4, 5};
+ *              int *b = a + 1;
+ *              void *c = nullptr;
+ *              format("%@", a);        //returns "[1,2,3,4,5]"
+ *              format("%@", b);        //returns "ptr<int>(2)"
+ *              format("%@", c);        //returns "nullptr<void>"
+ *              format("%@", nullptr);  //returns "nullptr"
+ *         }
+ *
  * @param  args
  *         Arguments referenced by the format specifiers in the format
  *         string.  If there are more arguments than format specifiers, the
  *         extra arguments are ignored.  The number of arguments is
  *         variable and may be zero.
  *
- * @throws  std::invalid_format
+ * @throws  std::invalid_argument
  *          If a format string contains an illegal syntax, a format
  *          specifier that is incompatible with the given arguments,
  *          insufficient arguments given the format string, or other
