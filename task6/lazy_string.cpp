@@ -66,7 +66,6 @@ lazy_string::char_ref::char_ref(lazy_string *ls, size_t index) : ls(ls), index(i
 
 lazy_string::char_ref &lazy_string::char_ref::operator=(char c) {
     if (ls->ref.use_count() > 1) {
-        std::cout << "copy" << std::endl;
         ls->ref = std::make_shared<std::string>(ls->ref->substr(ls->start, ls->sz));
         ls->start = 0;
         //ls->sz = ls->ref->size();
