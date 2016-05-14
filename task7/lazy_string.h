@@ -5,6 +5,7 @@
 #include <istream>
 #include <ostream>
 #include <memory>
+#include <mutex>
 
 /**
  * The lazy_string class implements Copy-on-Write string
