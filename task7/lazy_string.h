@@ -5,7 +5,6 @@
 #include <istream>
 #include <ostream>
 #include <memory>
-#include <mutex>
 
 /**
  * The lazy_string class implements Copy-on-Write string
@@ -95,6 +94,7 @@ public:
      * @throws  std::out_of_range if pos >= size().
      */
     char_ref at(size_t pos);
+    char at(size_t pos) const;
 
     /**
      * Returns a reference to the character at specified location pos.
@@ -110,6 +110,7 @@ public:
      * @throws  std::out_of_range if pos >= size().
      */
     char_ref operator[](size_t pos);
+    char operator[](size_t pos) const;
 
     /**
      * Replaces the contents of the string.

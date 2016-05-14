@@ -57,6 +57,16 @@ lazy_string::char_ref lazy_string::operator[](size_t i) {
     return char_ref(this, i);
 }
 
+char lazy_string::at(size_t i) const {
+    if (i >= sz)
+        throw std::out_of_range("lazy_string");
+    return (*ref)[start + i];
+}
+
+char lazy_string::operator[](size_t i) const {
+    return (*ref)[start + i];
+}
+
 std::istream &operator>>(std::istream &is, lazy_string &ls) {
     ls.mtx.lock();
 
