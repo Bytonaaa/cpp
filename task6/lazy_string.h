@@ -85,7 +85,7 @@ public:
      *
      * @throws  std::out_of_range if pos >= size().
      */
-    char_ref at(size_t pos);
+    char_ref at(size_t pos) const;
 
     /**
      * Returns a reference to the character at specified location pos.
@@ -100,7 +100,7 @@ public:
      *
      * @throws  std::out_of_range if pos >= size().
      */
-    char_ref operator[](size_t pos);
+    char_ref operator[](size_t pos) const;
 
     /**
      * Extracts a string from the input stream is, storing the sequence in ls,

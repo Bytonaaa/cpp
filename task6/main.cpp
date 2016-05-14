@@ -81,4 +81,6 @@ int main() {
     cout << s << endl << ss << endl << sss;
     s[2] = 'd';
     cout << s << endl << ss << endl;
+    const lazy_string hello("hello");
+    cout << hello[0] << endl;
 }

@@ -33,14 +33,14 @@ lazy_string lazy_string::substr(size_t pos, size_t len) const {
     );
 }
 
-lazy_string::char_ref lazy_string::at(size_t i) {
+lazy_string::char_ref lazy_string::at(size_t i) const {
     if (i >= sz)
         throw std::out_of_range("lazy_string");
-    return char_ref(this, i);
+    return char_ref(const_cast<lazy_string *>(this), i);
 }
 
-lazy_string::char_ref lazy_string::operator[](size_t i) {
-    return char_ref(this, i);
+lazy_string::char_ref lazy_string::operator[](size_t i) const {
+    return char_ref(const_cast<lazy_string *>(this), i);
 }
 
 std::istream &operator>>(std::istream &is, lazy_string &ls) {
