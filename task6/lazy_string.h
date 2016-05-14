@@ -72,7 +72,7 @@ public:
      *
      * @throws  std::out_of_range if pos > size()
      */
-    lazy_string substr(size_t pos = 0, size_t len = std::string::npos) const;
+    lazy_string substr(size_t pos = 0, size_t len = std::string::npos);
 
     /**
      * Returns a reference to the character at specified location pos.
@@ -85,7 +85,8 @@ public:
      *
      * @throws  std::out_of_range if pos >= size().
      */
-    char_ref at(size_t pos) const;
+    char_ref at(size_t pos);
+    char at(size_t pos) const;
 
     /**
      * Returns a reference to the character at specified location pos.
@@ -100,7 +101,8 @@ public:
      *
      * @throws  std::out_of_range if pos >= size().
      */
-    char_ref operator[](size_t pos) const;
+    char_ref operator[](size_t pos);
+    char operator[](size_t pos) const;
 
     /**
      * Extracts a string from the input stream is, storing the sequence in ls,

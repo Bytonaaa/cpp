@@ -23,7 +23,7 @@ size_t lazy_string::length() const {
 }
 
 
-lazy_string lazy_string::substr(size_t pos, size_t len) const {
+lazy_string lazy_string::substr(size_t pos, size_t len) {
     if (pos > sz)
         throw std::out_of_range("lazy_string");
     return lazy_string(
@@ -33,14 +33,24 @@ lazy_string lazy_string::substr(size_t pos, size_t len) const {
     );
 }
 
-lazy_string::char_ref lazy_string::at(size_t i) const {
+lazy_string::char_ref lazy_string::at(size_t i) {
     if (i >= sz)
         throw std::out_of_range("lazy_string");
     return char_ref(const_cast<lazy_string *>(this), i);
 }
 
-lazy_string::char_ref lazy_string::operator[](size_t i) const {
+lazy_string::char_ref lazy_string::operator[](size_t i) {
     return char_ref(const_cast<lazy_string *>(this), i);
+}
+
+char lazy_string::at(size_t i) const {
+    if (i >= sz)
+        throw std::out_of_range("lazy_string");
+    return (*ref)[start + i];
+}
+
+char lazy_string::operator[](size_t i) const {
+    return (*ref)[start + i];
 }
 
 std::istream &operator>>(std::istream &is, lazy_string &ls) {
